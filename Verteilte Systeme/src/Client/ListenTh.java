@@ -33,6 +33,9 @@ public class ListenTh extends Thread{
                     sendThread.start();
                 } else if (line.startsWith("MESSAGE")) {
                     System.out.println(line.substring(7));
+                } else if(line.startsWith("CHAT")){
+                    String recipient = line.substring(4);
+                    out.println("CHAT"+recipient);
                 }
             }
 
