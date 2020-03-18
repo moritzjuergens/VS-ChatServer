@@ -61,17 +61,21 @@ class HandlerThread implements Runnable {
                     Server.connect.remove(name);
                     return;
                     //Whisper-Check
-                } else if (input.contains("/#") && input.contains("#/")) {
-                    String s = (String) input.subSequence(input.indexOf("/#") + 2, input.indexOf("#/"));
+                } else if (input.startsWith("/whisper")) {
+                    String recipient = input.substring(9,input.indexOf(" ", 9));
+                    String message = input.substring(input.indexOf(" ",9)+1);
                     Iterator i = Server.connect.entrySet().iterator();
+                    int count = 0;
                     while (i.hasNext()) {
                         Map.Entry pair = (Map.Entry) i.next();
-                        if (s.equals(pair.getKey())) {
-                            Server.connect.get(pair.getKey()).println("MESSAGE" + pair.getKey() + " has whispered: " + input);
-                        } else {
-                            PrintWriter pp = Server.connect.get(pair.getKey());
-                            pp.write("MESSAGEUser has not been found...");
+                        if (recipient.equals(pair.getKey())) {
+                            Server.connect.get(pair.getKey()).println("MESSAGE" + name + " has whispered: " + message);
+                            count++;
                         }
+                    }
+                    if(count==0) {
+                        PrintWriter pp = Server.connect.get(name);
+                        pp.println("MESSAGEUser has not been found...");
                     }
                     //Group-Chat
                 } else {
