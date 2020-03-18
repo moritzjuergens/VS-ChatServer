@@ -36,9 +36,7 @@ public class ListenTh extends Thread{
                 }
             }
 
-        }catch(IOException e){
-                System.err.println(e);}
-
+        }catch(IOException ignored){}
     }
 }
 class SendTh extends Thread{
@@ -62,14 +60,12 @@ class SendTh extends Thread{
                     out.println(msg);
                     System.out.println("See you soon!");
                     System.err.println("Logged off...");
-                    s.close();
                     break;
                 }else{
                     out.println(msg);
                 }
             }
-        }catch (IOException e){
-            System.err.println(e);
-        }
+            s.close();
+        }catch (IOException ignored){}
     }
 }
