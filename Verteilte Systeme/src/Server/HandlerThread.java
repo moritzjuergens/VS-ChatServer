@@ -147,14 +147,22 @@ class HandlerThread implements Runnable {
             while (chatActive) {
                 input = in.readLine();
                 Iterator i = Server.connect.entrySet().iterator();
-                while (i.hasNext()) {
-                    Map.Entry pair = (Map.Entry) i.next();
-                    if (recipient.equals(pair.getKey())) {
-                        if (input.startsWith("/exit")) {
+                if(input.startsWith("/exit")){
+                    chatActive  = false;
+                    Server.connect.get(name).println("MESSAGEYou have left the chat");
+                    while (i.hasNext()) {
+                        Map.Entry pair = (Map.Entry) i.next();
+                        if (recipient.equals(pair.getKey())) {
                             Server.connect.get(pair.getKey()).println("MESSAGE" + name + " has left the chat");
-                            chatActive = false;
                         }
-                        Server.connect.get(pair.getKey()).println("MESSAGE" + name + " has whispered: " + input);
+                    }
+                    break;
+                }else {
+                    while (i.hasNext()) {
+                        Map.Entry pair = (Map.Entry) i.next();
+                        if (recipient.equals(pair.getKey())) {
+                            Server.connect.get(pair.getKey()).println("MESSAGE" + name + ": " + input);
+                        }
                     }
                 }
             }
