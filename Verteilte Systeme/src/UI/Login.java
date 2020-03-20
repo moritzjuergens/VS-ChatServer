@@ -16,9 +16,9 @@ public class Login {
 		username.setBounds(10, 10, 100, 100);
 		//Textfield Username
 		JTextField usernameInput= new JTextField();
-        usernameInput.setBounds(110, 50, 130, 30);
-        //Password
-        JLabel password = new JLabel();		
+        	usernameInput.setBounds(110, 50, 130, 30);
+       		//Password
+        	JLabel password = new JLabel();		
 		password.setText("Enter Pasword :");
 		password.setBounds(10, 60, 100, 100);
 		//Textfield password
@@ -26,10 +26,10 @@ public class Login {
 		passwordInput.setBounds(110, 100, 130, 30);
 		//Add fields to frame
 		popup.add(login);
-	    popup.add(username);
+	    	popup.add(username);
 		popup.add(usernameInput);
-        popup.add(password); 
-        popup.add(passwordInput); 
+        	popup.add(password); 
+        	popup.add(passwordInput); 
 		popup.setSize(300,300);    
 		popup.setLayout(null);    
 		popup.setVisible(true);    
@@ -37,7 +37,7 @@ public class Login {
         } 
 	   
 	//run
-    public static void main (String[] args){
+    	public static void main (String[] args){
 
         new Login();
 
