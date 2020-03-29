@@ -1,4 +1,5 @@
-import java.io.FileNotFoundException;
+package Server;
+
 import java.io.IOException;
 
 public class Run {
@@ -6,9 +7,9 @@ public class Run {
     public static void main(String[] args) throws IOException {
 
         Register obj = new Register("Jan","pass");
-        obj.WriteFile();    // Registrierung
+        obj.writeFile();    // Registrierung
 
-//        Login login = new Login();
+//        Server.Login login = new Server.Login();
 //        login.run();        // Logindaten prüfen
 
     }

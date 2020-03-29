@@ -18,7 +18,7 @@ class HandlerThread implements Runnable {
         this.socket = socket;
     }
 
-    //Run übernimmt das Routing
+    //Server.Run übernimmt das Routing
     //Hier werden alle Nachrichten eingehen und
     //An die entsprechenden Empfänger geschickt
     public void run() {
@@ -26,36 +26,47 @@ class HandlerThread implements Runnable {
             //Initialisierung der TCP Streams
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-            //Login
+            //Server.Login
             while (true) {
-                out.println("LOGIN");
-                name = in.readLine();
-                if (name.isEmpty()) {
-                    return;
-                }
-                synchronized (Server.connect) {
-                    if (!Server.connect.containsKey(name) && !name.isBlank()) {
-                        Server.connect.put(name, out);
+                out.println("LOGINRegister or Login?");
+                String a = in.readLine();
+                if (a.equals("Login")) {
+                    synchronized (Server.connect) {
+                        //Klassischer Bill Clinton
+                        Login login = new Login();
+                        name = login.run(out, in);
+                        if (!name.isEmpty()){Server.connect.put(name, out);}
+                        break;
+                    }
+                } else {
+                    synchronized (Server.connect) {
+                        //Klassischer Bill Clinton
+                        out.println("REGISTERUser?");
+                        String name = in.readLine();
+                        out.println("REGISTERPasswort?");
+                        String password = in.readLine();
+                        Register register = new Register(name, password);
+                        register.writeFile();
+                        if (!name.isEmpty()){Server.connect.put(name, out);}
                         out.println("CONFIRMED");
-                        System.out.println("User: '" + name + "' has logged in");
-                        globalChat(" has logged in");
                         break;
                     }
                 }
             }
-
             //Beginn des Chatting-Vorgangs
             while (true) {
+
                 //Eingang der Nachricht
                 String input = in.readLine();
                 System.out.println(name + ": " + input);
+
                 //Log-Off Check
                 if (input.equals("GOODBYE")) {
                     logOff();
                     return;
                     //Whisper-Check
-                } else if (input.startsWith("/whisper")) {
+                }
+                else if (input.startsWith("/whisper")) {
                     String recipient = input.substring(9, input.indexOf(" ", 9));
                     String message = input.substring(input.indexOf(" ", 9) + 1);
                     Iterator i = Server.connect.entrySet().iterator();
@@ -72,14 +83,17 @@ class HandlerThread implements Runnable {
                         pp.println("MESSAGEUser has not been found...");
                     }
 
-                } else if (input.contains("/chat")) {
+                }
+                else if (input.contains("/chat")) {
                     String recipient = input.substring(6);
                     chatInvite(input, recipient);
                     chatFunction(input,recipient);
-                } else if (input.startsWith("CHAT")) {
+                }
+                else if (input.startsWith("CHAT")) {
                     String recipient = input.substring(4);
                     chatFunction(input, recipient);
-                } else {
+                }
+                else {
                     globalChat(": " + input);
                 }
             }
@@ -88,7 +102,7 @@ class HandlerThread implements Runnable {
         }
     }
 
-    //Funktion des Routing bei Group-Chats
+    //Funktion des Routing bei Global-Chats
     private void globalChat(String msg) {
         Iterator i = Server.connect.entrySet().iterator();
         while (i.hasNext()) {

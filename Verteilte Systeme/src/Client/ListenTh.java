@@ -23,8 +23,13 @@ public class ListenTh extends Thread{
             while(true) {
                 var line = in.readLine();
 
-                if (line.startsWith("LOGIN")) {
-                    System.out.println("Enter Login Name: ");
+                if (line.startsWith("LOGIN")||line.startsWith("REGISTER")) {
+                    if(line.startsWith("LOGIN")){
+                        line = line.substring(5);
+                    }else{
+                        line = line.substring(8);
+                    }
+                    System.out.println(line);
                     name = sysIn.readLine();
                     out.println(name);
                 } else if (line.startsWith("CONFIRMED")) {

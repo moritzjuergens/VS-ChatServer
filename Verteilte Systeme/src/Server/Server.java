@@ -7,9 +7,6 @@ import java.util.concurrent.Executors;
 
 public class Server {
 
-//    static final HashSet<String> loginHash = new HashSet<>();
-//    static HashSet<PrintWriter> printHash = new HashSet<>();
-
     static HashMap<String, PrintWriter> connect = new HashMap<>();
 
     public static void main(String[] args) throws Exception{

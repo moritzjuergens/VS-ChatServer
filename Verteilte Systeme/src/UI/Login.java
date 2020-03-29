@@ -6,9 +6,9 @@ public class Login {
 
     Login(){   
 		//Popup 
-		JFrame popup=new JFrame("Client Login"); 
+		JFrame popup=new JFrame("Client Server.Login");
 		//Button
-		JButton login=new JButton("Login");    
+		JButton login=new JButton("Server.Login");
 		login.setBounds(100,150,140, 40);    
 		//Username
 		JLabel username = new JLabel();		

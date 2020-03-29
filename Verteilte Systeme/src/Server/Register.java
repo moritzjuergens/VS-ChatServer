@@ -1,3 +1,5 @@
+package Server;
+
 import java.io.*;
 import java.util.*;
 
@@ -47,7 +49,7 @@ public class Register {
     }
 
 
-    public void WriteFile() {
+    public void writeFile() {
         try{
             FileWriter fileWrite = new FileWriter("./user.txt", true);  // Erstelle user.txt falls nicht vorhanden
             fileWrite.write(UserID() + ";" + user_name + ";" + user_pass + "\n");   // Neue Zeile ID;Name;Pass einfügen
