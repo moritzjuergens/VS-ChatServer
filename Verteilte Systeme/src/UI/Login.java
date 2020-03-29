@@ -7,9 +7,12 @@ public class Login {
     Login(){   
 		//Popup 
 		JFrame popup=new JFrame("Client Login"); 
-		//Button
+		//Buton Sign up
+		JButton signUp=new JButton("Sign up");    
+		signUp.setBounds(40,150,80, 40);
+		//Button login
 		JButton login=new JButton("Login");    
-		login.setBounds(100,150,140, 40);    
+		login.setBounds(160,150,80, 40);     
 		//Username
 		JLabel username = new JLabel();		
 		username.setText("Enter Username :");
@@ -26,6 +29,7 @@ public class Login {
 		passwordInput.setBounds(110, 100, 130, 30);
 		//Add fields to frame
 		popup.add(login);
+		popup.add(signUp);
 	    	popup.add(username);
 		popup.add(usernameInput);
         	popup.add(password); 
