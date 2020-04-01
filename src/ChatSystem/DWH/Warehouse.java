@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import ChatSystem.CSLogger;
 import ChatSystem.Entities.Group;
 import ChatSystem.Entities.Message;
 import ChatSystem.Entities.User;
@@ -28,7 +29,7 @@ public class Warehouse {
 			String name = "./" + fileName + ".dat";
 			try {
 				ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(name));
-				System.out.println("Saving " + fileName + " in " + name);
+				CSLogger.log(Warehouse.class, "Saving %s in %s", fileName, name);
 				if (fileName.equals("messages")) {
 					out.writeObject(getMessages());
 				} else if (fileName.equals("groups")) {
@@ -53,7 +54,8 @@ public class Warehouse {
 			File f = new File(name);
 			if (!f.exists())
 				continue;
-			System.out.println("Loading file: " + f.getAbsolutePath());
+			
+			CSLogger.log(Warehouse.class, "Loading file: %s", f.getAbsolutePath());
 
 			try {
 				ObjectInputStream in = new ObjectInputStream(new FileInputStream(name));
@@ -136,6 +138,11 @@ public class Warehouse {
 	public static boolean doesMessageExist(Message m) {
 		return getMessages().stream().filter(x -> x.equals(m)).count() > 0;
 	}
+	
+	public static boolean doesUserExist(String name) {
+		return getUsers().stream().filter(x -> x.name.equalsIgnoreCase(name)).count() > 0;
+	}
+	
 	public static boolean doesUserExist(User u) {
 		return getUsers().stream().filter(x -> x.equals(u)).count() > 0;
 	}

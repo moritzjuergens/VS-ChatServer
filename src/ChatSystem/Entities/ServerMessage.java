@@ -27,6 +27,7 @@ public class ServerMessage implements Serializable {
 	}
 
 	public String toString() {
+		if(this.object == null) return this.prefix + "\t";
 		return this.prefix + "\t" + this.object.toString() + "\t";
 	}
 }

@@ -29,12 +29,10 @@ public class ServerThread implements Runnable {
 	@Override
 	public void run() {
 		while (true) {
-			if (!socket.isClosed()) {
-				try {
-					ServerMessage m = (ServerMessage) in.readObject();
-					server.messageReceived(m, out);
-				} catch (ClassNotFoundException | IOException e) {
-				}
+			try {
+				ServerMessage m = (ServerMessage) in.readObject();
+				server.messageReceived(m, out);
+			} catch (ClassNotFoundException | IOException e) {
 			}
 		}
 	}
