@@ -1,3 +1,0 @@
-1;Jan;pass
-2;Moritz;passwort
-3;Bill Clinton;Hilary
