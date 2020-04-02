@@ -7,10 +7,10 @@ import java.io.Serializable;
 
 @SuppressWarnings("serial")
 public class Messages implements Serializable {
-	public User user;
+	public Contact user;
 	public Contact contact;
 	
-	public Messages(User u, Contact c) {
+	public Messages(Contact u, Contact c) {
 		this.user = u;
 		this.contact = c;
 	}
@@ -21,7 +21,11 @@ public class Messages implements Serializable {
 	}
 
 	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-		this.user = (User) in.readObject();
+		this.user = (Contact) in.readObject();
 		this.contact = (Contact) in.readObject();
+	}
+	
+	public String toString() {
+		return this.user + "\t" + this.contact;
 	}
 }

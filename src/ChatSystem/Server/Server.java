@@ -9,7 +9,13 @@ import java.util.concurrent.Executors;
 
 import ChatSystem.CSLogger;
 import ChatSystem.DWH.Warehouse;
+import ChatSystem.Entities.AddContact;
+import ChatSystem.Entities.Contact;
+import ChatSystem.Entities.Contact.ContactType;
+import ChatSystem.Entities.Group;
+import ChatSystem.Entities.Message;
 import ChatSystem.Entities.Messages;
+import ChatSystem.Entities.SendMessage;
 import ChatSystem.Entities.ServerMessage;
 import ChatSystem.Entities.SignInUp;
 import ChatSystem.Entities.User;
@@ -76,28 +82,30 @@ public class Server {
 	}
 
 	public void sendMessage(User u, ServerMessage m) {
-		if (users.contains(u)) {
-			CSLogger.log(Server.class, "Sending %s to $s", m, u);
-			try {
+		System.out.println("Nachricht an " + u.name);
+		try {
+			if (users.contains(u)) {
+				System.out.println("existiert");
 				u.out.writeObject(m);
-			} catch (IOException e) {
-				e.printStackTrace();
+			} else {
+				// TODO: Anderen Servern nachricht schicken
+				System.out.println("existiert nicht");
 			}
+		} catch (IOException e) {
 		}
+	}
+
+	public void sendMessage(User sender, User receiver, String message) {
+		CSLogger.log(Server.class, "Sending %s from %s to %s", message, sender.getContact(), receiver.getContact());
+		Message m = new Message(sender.getContact(), receiver.getContact(), message);
+		ServerMessage sm = new ServerMessage("message", m);
+		sendMessage(receiver, sm);
 	}
 
 	public void messageReceived(ServerMessage message, ObjectOutputStream out) {
 		CSLogger.log(Server.class, "Message received: %s", message);
 
 		switch (message.prefix.toLowerCase()) {
-		case "login":
-			synchronized (users) {
-				User u = Warehouse.getUser(message.object.toString());
-				u.out = out;
-				users.add(u);
-				sendMessage(u, new ServerMessage("Hi, ich kenn dich jz", u));
-			}
-			break;
 		case "signin":
 			synchronized (users) {
 				SignInUp data = (SignInUp) message.object;
@@ -134,12 +142,60 @@ public class Server {
 			}
 			break;
 		case "getcontacts":
-			User target = (User) message.object;
+			Contact target = (Contact) message.object;
 			sendMessage(out, new ServerMessage("contacts", Warehouse.getContactsOf(target)));
 			break;
 		case "getmessages":
 			Messages messages = (Messages) message.object;
 			sendMessage(out, new ServerMessage("messages", Warehouse.getMessages(messages.user, messages.contact)));
+			break;
+		case "getalluser":
+			Contact sender = (Contact) message.object;
+			sendMessage(out, new ServerMessage("alluser", Warehouse.getAllUserWithout(sender.name)));
+			break;
+		case "newcontact":
+			AddContact newC = (AddContact) message.object;
+			if (!Warehouse.getContactsOf(newC.who).contains(newC.whom)) {
+				Message m = new Message(newC.who, newC.whom, "Hi, I just added you as a new friend :)");
+				ServerMessage sm = new ServerMessage("message", m);
+				sendMessage(Warehouse.getUser(newC.who), sm);
+				sendMessage(Warehouse.getUser(newC.whom), sm);
+			}
+			break;
+		case "newgroup":
+			AddContact newG = (AddContact) message.object;
+			Group g = new Group(newG.who, newG.whom);
+			// TODO: Anderen Server diese Gruppe schicken zum speichern
+			for (Contact c : g.members) {
+				Message m = new Message(newG.who, g.getContact(), "invited " + c.name);
+				for (Contact c_ : g.members) {
+					sendMessage(Warehouse.getUser(c_), new ServerMessage("message", m));
+				}
+			}
+			break;
+		case "addtogroup":
+			AddContact addG = (AddContact) message.object;
+			Group group = Warehouse.getGroupsById(addG.who.name).get(0);
+			if (Warehouse.addUserToGroup(addG.whom, group)) {
+				ServerMessage sm = new ServerMessage("message",
+						new Message(addG.whom, group.getContact(), "joined the group"));
+				for (Contact c : group.members) {
+					sendMessage(Warehouse.getUser(c), sm);
+				}
+			}
+			break;
+		case "message":
+			SendMessage sm = (SendMessage) message.object;
+			Message m = new Message(sm.sender, sm.receiver, sm.message);
+			System.out.println("new messagess");
+			if (sm.receiver.type.equals(ContactType.GROUP)) {
+				for (Contact c : Warehouse.getGroupsById(sm.receiver.name).get(0).members) {
+					sendMessage(Warehouse.getUser(c), new ServerMessage("message", m));
+				}
+			} else {
+				sendMessage(Warehouse.getUser(sm.receiver), new ServerMessage("message", m));
+				sendMessage(Warehouse.getUser(sm.sender), new ServerMessage("message", m));
+			}
 			break;
 		}
 	}

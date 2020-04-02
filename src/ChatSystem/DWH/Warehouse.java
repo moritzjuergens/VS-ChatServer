@@ -104,6 +104,8 @@ public class Warehouse {
 	}
 
 	public static void addGroup(Group g) {
+
+		CSLogger.log(Warehouse.class, "Adding Group to Warehouse %s", g);
 		synchronized (groups) {
 			groups.add(g);
 		}
@@ -121,62 +123,74 @@ public class Warehouse {
 		return groups;
 	}
 
+	public static List<Contact> getAllUser() {
+		return getUsers().stream().map(x -> new Contact(x.name, ContactType.USER)).collect(Collectors.toList());
+	}
+
+	public static List<Contact> getAllUserWithout(String name) {
+		return getAllUser().stream().filter(x -> !x.name.equals(name)).collect(Collectors.toList());
+	}
+
 	public static User getUser(String name) {
 		List<User> usersFound = getUsers().stream().filter(x -> x.name.equals(name)).collect(Collectors.toList());
 		if (usersFound.size() == 0)
 			return null;
 		return usersFound.get(0);
 	}
+	public static User getUser(Contact c) {
+		return getUser(c.name);
+	}
 
-	public static void addUserToGroup(User u, Group g) {
+	public static boolean addUserToGroup(Contact c, Group g){
 		if (g == null)
-			return;
-		synchronized (g) {
-			if (g.members.contains(u))
-				return;
-			g.members.add(u);
+			return false;
+		synchronized (groups) {
+			if (g.members.contains(c))
+				return false;
+			g.members.add(c);
+			return true;
 		}
 	}
-	
-	public static List<Message> getMessages(User u, Contact c) {
-		return getMessages().stream().filter(x -> {
-			if(c.type.equals(ContactType.USER)) {
-				return x.from.equals(u) || x.toUser.equals(u);
-			}
-			if(x.toGroup != null) {
-				return x.toGroup.members.contains(u);
-			}
-			return false;
-		}).collect(Collectors.toList());
+
+	public static List<Message> getMessages(Contact a, Contact b) {
+		return getMessages().stream().filter(
+				x -> (x.sender.equals(a) && x.receiver.equals(b)) || (x.sender.equals(b) && x.receiver.equals(a)))
+				.collect(Collectors.toList());
 	}
 
-	public static List<Contact> getContactsOf(User u) {
-		if (u == null)
+	public static List<Group> getGroupsById(String id) {
+		return getGroups().stream().filter(x -> id.equals(x.id + "")).collect(Collectors.toList());
+	}
+
+	public static List<Contact> getContactsOf(Contact c) {
+		if (c == null)
 			return new ArrayList<Contact>();
-		List<Contact> contacts = getGroupsOfUser(u).stream().map(x -> new Contact(x.id + "", ContactType.GROUP))
+
+		Set<String> names = new HashSet<String>();
+		List<Contact> contacts = getGroupsOfContact(c).stream().map(x -> new Contact(x.id + "", ContactType.GROUP))
 				.collect(Collectors.toList());
-		Set<String> usernames = new HashSet<String>();
-		getMessages().stream().forEach(x -> {
-			if (x.from.equals(u) && x.toUser != null) {
-				usernames.add(x.toUser.name);
+		getMessages().stream().filter(x -> x.receiver.type.equals(ContactType.USER)).forEach(x -> {
+			if (x.sender.equals(c)) {
+				names.add(x.receiver.name);
 			}
-			if (x.toUser.equals(u)) {
-				usernames.add(x.from.name);
+			if (x.receiver.equals(c)) {
+				names.add(x.sender.name);
 			}
 		});
-		usernames.stream().forEach(x -> contacts.add(new Contact(x, ContactType.USER)));
+		names.forEach(x -> contacts.add(new Contact(x, ContactType.USER)));
+
 		return contacts;
 	}
 
-	public static List<Group> getGroupsOfUser(User u) {
-		if (u == null)
+	public static List<Group> getGroupsOfContact(Contact c) {
+		if (c == null)
 			return new ArrayList<Group>();
-		return getGroups().stream().filter(x -> x.members.contains(u)).collect(Collectors.toList());
+		return getGroups().stream().filter(x -> x.members.contains(c)).collect(Collectors.toList());
 	}
 
-	public static List<Message> getChatMessagesSorted(User a, User b) {
-		return getMessages().stream()
-				.filter(x -> ((x.from.equals(a) && x.toUser.equals(b)) || (x.from.equals(b) && x.toUser.equals(a))))
+	public static List<Message> getChatMessagesSorted(Contact a, Contact b) {
+		return getMessages().stream().filter(
+				x -> ((x.sender.equals(a) && x.receiver.equals(b)) || (x.sender.equals(b) && x.receiver.equals(a))))
 				.sorted().collect(Collectors.toList());
 	}
 
@@ -197,7 +211,8 @@ public class Warehouse {
 	}
 
 	public static List<Message> getGroupMessages(Group g) {
-		return getMessages().stream().filter(x -> x.toGroup != null && x.toGroup.equals(g))
+		return getMessages().stream()
+				.filter(x -> x.receiver.type.equals(ContactType.GROUP) && x.receiver.name.equals(g.id))
 				.collect(Collectors.toList());
 	}
 }

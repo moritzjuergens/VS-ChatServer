@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 import ChatSystem.DWH.Warehouse;
+import ChatSystem.Entities.Contact.ContactType;
 
 @SuppressWarnings("serial")
 public class User implements Serializable {
@@ -24,6 +25,10 @@ public class User implements Serializable {
 		this.password = password;
 		this.id = id;
 		Warehouse.addUser(this);
+	}
+	
+	public Contact getContact() {
+		return new Contact(this.name, ContactType.USER);
 	}
 	
 	public boolean equals(User u) {

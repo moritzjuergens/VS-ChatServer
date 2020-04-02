@@ -19,12 +19,19 @@ public class Contact implements Serializable {
 	public enum ContactType {
 		USER(), GROUP();
 	}
-	
-	public boolean equals(Contact c) {
-		if(c == null) return false;
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o)
+			return true;
+		if (o == null)
+			return false;
+		if (getClass() != o.getClass())
+			return false;
+		Contact c = (Contact) o;
 		return this.name.equals(c.name) && this.type.equals(c.type);
 	}
-	
+
 	public String toString() {
 		return this.name + "\t" + this.type;
 	}

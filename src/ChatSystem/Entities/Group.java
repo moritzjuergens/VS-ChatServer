@@ -8,19 +8,31 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ChatSystem.DWH.Warehouse;
+import ChatSystem.Entities.Contact.ContactType;
 
 @SuppressWarnings("serial")
 public class Group implements Serializable {
 
 	public long id;
-	public List<User> members;
-	
+	public List<Contact> members;
+
 	public Group() {
-		this.members = new ArrayList<User>();
+		this(new Contact[] {});
+	}
+
+	public Group(Contact... member) {
+		this.members = new ArrayList<Contact>();
+		for (Contact c : member) {
+			this.members.add(c);
+		}
 		this.id = System.currentTimeMillis();
 		Warehouse.addGroup(this);
 	}
-	
+
+	public Contact getContact() {
+		return new Contact(this.id + "", ContactType.GROUP);
+	}
+
 	public boolean equals(Group g) {
 		return this.id == g.id;
 	}
@@ -33,12 +45,11 @@ public class Group implements Serializable {
 	@SuppressWarnings("unchecked")
 	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 		this.id = in.readLong();
-		this.members = (ArrayList<User>) in.readObject();
+		this.members = (ArrayList<Contact>) in.readObject();
 	}
-	
+
 	public String toString() {
 		return this.id + "\t";
 	}
 
-	
 }

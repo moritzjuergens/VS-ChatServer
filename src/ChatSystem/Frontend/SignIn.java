@@ -3,8 +3,6 @@ package ChatSystem.Frontend;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -30,7 +28,7 @@ public class SignIn extends JFrame {
 
 		this.client = c;
 		setSize(300, 200);
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setLocationRelativeTo(null);
 
 		labelInfo = new JLabel("", SwingConstants.CENTER);
@@ -64,19 +62,15 @@ public class SignIn extends JFrame {
 		add(labelInfo, BorderLayout.CENTER);
 		add(panelButtons, BorderLayout.PAGE_END);
 
-		buttonSignIn.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				signInUp(true);
-			}
+		buttonSignIn.addActionListener((e) -> {
+			signInUp(true);
 		});
 
-		buttonSignUp.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				signInUp(false);
-			}
+		buttonSignUp.addActionListener((e) -> {
+			signInUp(false);
 		});
+		
+		setVisible(true);
 	}
 
 	private void signInUp(boolean signIn) {

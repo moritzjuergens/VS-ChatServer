@@ -8,11 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ChatSystem.CSLogger;
-import ChatSystem.ChatSystem;
 import ChatSystem.Entities.Contact;
 import ChatSystem.Entities.Message;
 import ChatSystem.Entities.ServerMessage;
 import ChatSystem.Entities.User;
+import ChatSystem.Frontend.SignIn;
 import ChatSystem.Frontend.Chat.Chat;
 
 public class Client extends Thread {
@@ -20,17 +20,14 @@ public class Client extends Thread {
 	public static List<Client> registeredClients = new ArrayList<Client>();
 	public Chat chat;
 
-	String name = "Client";
 	Socket s;
 	ObjectInputStream in;
 	ObjectOutputStream out;
-
-	public Client(String name) {
-		this();
-		this.name = name;
-	}
+	SignIn frameSignIn;
 
 	public Client() {
+
+		this.frameSignIn = new SignIn(this);
 
 		new Thread(() -> {
 
@@ -51,11 +48,10 @@ public class Client extends Thread {
 						}
 					}
 				}).start();
-
-			} catch (IOException e) {
-				e.printStackTrace();
-			} finally {
 				CSLogger.log(Client.class, "Client using server %s", port);
+			} catch (IOException e) {
+				CSLogger.log(Client.class, "Client cant use Server %s", port);
+			} finally {
 				Client.registeredClients.add(this);
 			}
 		}).start();
@@ -84,7 +80,7 @@ public class Client extends Thread {
 			CSLogger.log(Client.class, "Sending %s", message);
 			out.writeObject(message);
 		} catch (IOException e) {
-			e.printStackTrace();
+			CSLogger.log(Client.class, "Der Server ist nicht erreichbar");
 		}
 	}
 
@@ -93,26 +89,34 @@ public class Client extends Thread {
 		CSLogger.log(Client.class, "Message received: %s", message);
 		switch (message.prefix.toLowerCase()) {
 		case "wrongcredentials":
-			ChatSystem.frameSignIn.wrongCredentials();
+			frameSignIn.wrongCredentials();
 			break;
 		case "usernametaken":
-			ChatSystem.frameSignIn.usernameTaken();
+			frameSignIn.usernameTaken();
 			break;
 		case "welcome":
 			User me = (User) message.object;
-			ChatSystem.frameSignIn.setVisible(false);
+			frameSignIn.setVisible(false);
 			chat = new Chat(me, this);
-			sendMessage(new ServerMessage("getcontacts", me));
+			sendMessage(new ServerMessage("getcontacts", me.getContact()));
 			break;
-		case "contacts": 
+		case "contacts":
 			List<Contact> contacts = (List<Contact>) message.object;
 			chat.updateContacts(contacts);
 			break;
-		case "messages": 
+		case "messages":
 			List<Message> messages = (List<Message>) message.object;
-			chat.updateMessage(messages);
+			chat.setMessages(messages);
+			break;
+		case "alluser":
+			List<Contact> users = (List<Contact>) message.object;
+			chat.updateUserList(users);
+			break;
+		case "message":
+			Message m = (Message) message.object;
+			System.out.println("da kam was");
+			chat.messageReceived(m);
 			break;
 		}
-			
 	}
 }

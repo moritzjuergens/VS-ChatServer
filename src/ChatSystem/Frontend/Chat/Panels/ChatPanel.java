@@ -2,6 +2,7 @@ package ChatSystem.Frontend.Chat.Panels;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -17,60 +18,107 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 import javax.swing.text.StyledEditorKit;
 
+import ChatSystem.Entities.Contact;
+import ChatSystem.Entities.Contact.ContactType;
 import ChatSystem.Entities.Message;
+import ChatSystem.Entities.SendMessage;
+import ChatSystem.Entities.ServerMessage;
 import ChatSystem.Entities.User;
+import ChatSystem.Frontend.Chat.Chat;
+import ChatSystem.Frontend.Chat.Frames.UserListFrame;
 
 @SuppressWarnings("serial")
 public class ChatPanel extends JPanel {
 
 	User user;
-	String chatPartner;
+	Contact currentContact;
+
 	JLabel title = new JLabel("Chat", SwingConstants.CENTER);
 	JTextPane chatArea = new JTextPane();
 	JTextField textField = new JTextField();
 	JButton sendMessage = new JButton("send");
+	JButton addUser = new JButton("+");
+	JPanel header = new JPanel(new BorderLayout(10, 10));
+	JPanel footer = new JPanel(new BorderLayout(10, 10));
+	List<Message> messages = new ArrayList<>();
+	UserListFrame userListframe;
+	Chat chat;
 
-	public ChatPanel(User u) {
+	public ChatPanel(Chat chat, UserListFrame userListFrame) {
 
-		this.user = u;
+		this.chat = chat;
+		this.user = chat.user;
+		this.userListframe = userListFrame;
+
 		setLayout(new BorderLayout(10, 10));
 
-		add(title, BorderLayout.PAGE_START);
+		JPanel header = new JPanel(new BorderLayout(10, 10));
+		addUser.setVisible(false);
+		header.add(title, BorderLayout.CENTER);
+		header.add(addUser, BorderLayout.LINE_END);
+		add(header, BorderLayout.PAGE_START);
 
 		chatArea.setAutoscrolls(true);
 		chatArea.setEditorKit(new StyledEditorKit());
+		chatArea.setEditable(false);
 		add(new JScrollPane(chatArea), BorderLayout.CENTER);
 
-		JPanel footer = new JPanel(new BorderLayout(10, 10));
 		footer.add(new JLabel("Message"), BorderLayout.LINE_START);
 		footer.add(textField, BorderLayout.CENTER);
 		footer.add(sendMessage, BorderLayout.LINE_END);
+		footer.setVisible(false);
 
+		sendMessage.addActionListener((e) -> {
+			String msg = textField.getText();
+			if (msg.length() != 0) {
+				chat.client.sendMessage(new ServerMessage("message",
+						new SendMessage(chat.user.getContact(), chat.getCurrentContact(), msg)));
+				textField.setText("");
+			}
+		});
+
+		addUser.addActionListener((e) -> {
+			chat.client.sendMessage(new ServerMessage("getalluser", chat.user.getContact()));
+			userListFrame.open("chat");
+		});
+		;
 		add(footer, BorderLayout.PAGE_END);
 
 	}
 
-	public void updateMessages(List<Message> messages) {
+	public void setMessages(List<Message> newMessages) {
+		this.messages = new ArrayList<Message>();
 		chatArea.setText("");
-		for (Message m : messages) {
-			String msg = (m.from.equals(user) ? "You: " : "") +  m.message + "\n";
-			Color c = m.from.equals(user) ? new Color(37, 202, 73) : new Color(0, 136, 255);
-			StyleContext sc = StyleContext.getDefaultStyleContext();
-			AttributeSet aset = sc.addAttribute(SimpleAttributeSet.EMPTY, StyleConstants.Foreground, c);
-
-			aset = sc.addAttribute(aset, StyleConstants.Alignment, StyleConstants.ALIGN_JUSTIFIED);
-			aset = sc.addAttribute(aset, StyleConstants.FontFamily, "Lucida Console");
-
-			int len = chatArea.getDocument().getLength();
-			chatArea.setCaretPosition(len);
-			chatArea.setCharacterAttributes(aset, false);
-			chatArea.replaceSelection(msg);
+		for (Message m : newMessages) {
+			addMessage(m);
 		}
-
 	}
 
-	public void updatePartner(String name) {
-		this.title.setText("Chat - " + name);
+	public void addMessage(Message m) {
+		this.messages.add(m);
+
+		String msg = (user.name.equals(m.sender.name) ? "You: "
+				: (currentContact.type.equals(ContactType.GROUP) ? m.sender.name + ": " : "")) + m.message + "\n";
+		Color c = user.name.equals(m.sender.name) ? new Color(37, 202, 73) : new Color(0, 136, 255);
+		StyleContext sc = StyleContext.getDefaultStyleContext();
+		AttributeSet aset = sc.addAttribute(SimpleAttributeSet.EMPTY, StyleConstants.Foreground, c);
+
+		aset = sc.addAttribute(aset, StyleConstants.Alignment, StyleConstants.ALIGN_JUSTIFIED);
+		aset = sc.addAttribute(aset, StyleConstants.FontFamily, "Lucida Console");
+
+		chatArea.setEditable(true);
+		int len = chatArea.getDocument().getLength();
+		chatArea.setCaretPosition(len);
+		chatArea.setCharacterAttributes(aset, false);
+		chatArea.replaceSelection(msg);
+		chatArea.setEditable(false);
+	}
+
+	public void updatePartner(Contact contact) {
+		this.currentContact = contact;
+		addUser.setVisible(true);
+		footer.setVisible(true);
+		this.title.setText("Chat - " + contact.name);
 	}
 
 }
