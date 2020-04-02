@@ -35,15 +35,6 @@ public class Chat {
 	}
 
 	public void messageReceived(Message m) {
-		
-		System.out.println("_________________________________");
-		System.out.println("Me: " + user.getContact());
-		System.out.println("_________________________________");
-		System.out.println("Contact: " + contacts);
-		System.out.println("Sender: " + m.sender);
-		System.out.println("Receiver: " + m.receiver);
-		System.out.println("_________________________________");
-		
 		if(m.receiver.type.equals(ContactType.GROUP)) {
 			if(!contacts.contains(m.receiver)) {
 				contacts.add(m.receiver);
@@ -53,6 +44,10 @@ public class Chat {
 		else {
 			if (!contacts.contains(m.sender) && !m.sender.equals(user.getContact())) {
 				contacts.add(m.sender);
+				updateContacts(contacts);
+			}
+			if (!contacts.contains(m.receiver) && !m.receiver.equals(user.getContact())) {
+				contacts.add(m.receiver);
 				updateContacts(contacts);
 			}
 		}

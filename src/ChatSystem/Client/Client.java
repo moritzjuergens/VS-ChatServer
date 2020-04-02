@@ -114,7 +114,6 @@ public class Client extends Thread {
 			break;
 		case "message":
 			Message m = (Message) message.object;
-			System.out.println("da kam was");
 			chat.messageReceived(m);
 			break;
 		}

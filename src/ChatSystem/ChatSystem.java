@@ -31,8 +31,8 @@ public class ChatSystem {
 			new Server(7777);
 		}
 
-		Warehouse.getMessages().stream().forEach(System.out::println);
-
+		// Warehouse.getMessages().stream().forEach(System.out::println);
+		
 		new Client();
 //		new Client();
 
