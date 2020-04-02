@@ -14,12 +14,13 @@ public class ChatSystem {
 
 	public static void main(String[] args) {
 		System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tT] [%4$-7s] %5$s %n");
+
 		Warehouse.loadFiles();
-		
-		if(!(Arrays.stream(args).filter(x -> x.equals("onlyClient")).count() > 0)) {
+
+		if (!(Arrays.stream(args).filter(x -> x.equals("onlyClient")).count() > 0)) {
 			new Server(7777);
 		}
-		
+
 		client = new Client();
 
 		frameSignIn = new SignIn(client);
@@ -30,8 +31,9 @@ public class ChatSystem {
 			Client.closeAll();
 			Warehouse.saveFiles();
 		}));
-
-		/* new User("Timo", "Pass"); new User("Nicolas", "Passwort1234"); new
+		
+		/*
+		 * new User("Timo", "Pass"); new User("Nicolas", "Passwort1234"); new
 		 * User("Moritz", "Mobama");
 		 * 
 		 * System.err.println("Users");

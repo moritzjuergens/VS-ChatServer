@@ -9,6 +9,7 @@ import java.util.concurrent.Executors;
 
 import ChatSystem.CSLogger;
 import ChatSystem.DWH.Warehouse;
+import ChatSystem.Entities.Messages;
 import ChatSystem.Entities.ServerMessage;
 import ChatSystem.Entities.SignInUp;
 import ChatSystem.Entities.User;
@@ -87,7 +88,7 @@ public class Server {
 
 	public void messageReceived(ServerMessage message, ObjectOutputStream out) {
 		CSLogger.log(Server.class, "Message received: %s", message);
-		
+
 		switch (message.prefix.toLowerCase()) {
 		case "login":
 			synchronized (users) {
@@ -100,18 +101,21 @@ public class Server {
 		case "signin":
 			synchronized (users) {
 				SignInUp data = (SignInUp) message.object;
-				if(!Warehouse.doesUserExist(data.name)) {
+				if (!Warehouse.doesUserExist(data.name)) {
 					sendMessage(out, new ServerMessage("wrongcredentials", null));
 					break;
 				}
 				User u = Warehouse.getUser(data.name);
-				if(!(u.name.equals(data.name) && u.password.equals(data.password))) {
+				if (!(u.name.equals(data.name) && u.password.equals(data.password))) {
 					sendMessage(out, new ServerMessage("wrongcredentials", null));
 					break;
 				}
-				// TODO: User anlegen. Nachrichten senden mit success
-				System.out.println("Success");
-				
+				synchronized (users) {
+					u.out = out;
+					this.users.add(u);
+					sendMessage(out, new ServerMessage("welcome", u));
+				}
+
 			}
 			break;
 		case "signup":
@@ -121,9 +125,21 @@ public class Server {
 					sendMessage(out, new ServerMessage("usernametaken", null));
 					break;
 				}
-				// TODO: User anlegen. Nachrichten senden mit success
-				System.out.println("Success");
+				User u = new User(data.name, data.password);
+				synchronized (users) {
+					u.out = out;
+					this.users.add(u);
+					sendMessage(out, new ServerMessage("welcome", u));
+				}
 			}
+			break;
+		case "getcontacts":
+			User target = (User) message.object;
+			sendMessage(out, new ServerMessage("contacts", Warehouse.getContactsOf(target)));
+			break;
+		case "getmessages":
+			Messages messages = (Messages) message.object;
+			sendMessage(out, new ServerMessage("messages", Warehouse.getMessages(messages.user, messages.contact)));
 			break;
 		}
 	}

@@ -8,10 +8,14 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import ChatSystem.CSLogger;
+import ChatSystem.Entities.Contact;
+import ChatSystem.Entities.Contact.ContactType;
 import ChatSystem.Entities.Group;
 import ChatSystem.Entities.Message;
 import ChatSystem.Entities.User;
@@ -21,8 +25,7 @@ public class Warehouse {
 	private static List<Message> messages = new ArrayList<Message>();
 	private static List<User> users = new ArrayList<User>();
 	private static List<Group> groups = new ArrayList<Group>();
-	private static String[] files = new String[] {"messages", "users", "groups"};
-
+	private static String[] files = new String[] { "messages", "users", "groups" };
 
 	public static void saveFiles() {
 		for (String fileName : files) {
@@ -49,35 +52,43 @@ public class Warehouse {
 
 	@SuppressWarnings({ "unchecked", "resource" })
 	public static void loadFiles() {
-		for (String fileName : files) {
-			String name = "./" + fileName + ".dat";
-			File f = new File(name);
-			if (!f.exists())
-				continue;
-			
-			CSLogger.log(Warehouse.class, "Loading file: %s", f.getAbsolutePath());
+		synchronized (messages) {
+			synchronized (groups) {
+				synchronized (users) {
 
-			try {
-				ObjectInputStream in = new ObjectInputStream(new FileInputStream(name));
-				if (fileName.equals("messages")) {
-					messages = (List<Message>) in.readObject();
-				} else if (fileName.equals("groups")) {
-					groups = (List<Group>) in.readObject();
-				} else if (fileName.equals("users")) {
-					users = (List<User>) in.readObject();
+					for (String fileName : files) {
+						String name = "./" + fileName + ".dat";
+						File f = new File(name);
+						if (!f.exists())
+							continue;
+						CSLogger.log(Warehouse.class, "Loading file: %s", f.getAbsolutePath());
+						try {
+							ObjectInputStream in = new ObjectInputStream(new FileInputStream(name));
+							if (fileName.equals("messages")) {
+								messages = (List<Message>) in.readObject();
+							} else if (fileName.equals("groups")) {
+								groups = (List<Group>) in.readObject();
+							} else if (fileName.equals("users")) {
+								users = (List<User>) in.readObject();
+							}
+						} catch (FileNotFoundException e) {
+							e.printStackTrace();
+						} catch (IOException e) {
+							e.printStackTrace();
+						} catch (ClassNotFoundException e) {
+							e.printStackTrace();
+						}
+					}
 				}
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
 			}
 		}
 	}
 
 	public static void addMessage(Message m) {
-		getMessages().add(m);
+		CSLogger.log(Warehouse.class, "Adding Message to Warehouse %s", m);
+		synchronized (messages) {
+			messages.add(m);
+		}
 	}
 
 	public static void addUser(User u) {
@@ -87,11 +98,15 @@ public class Warehouse {
 			return;
 		}
 		System.out.println("User created and stored in DB");
-		getUsers().add(u);
+		synchronized (users) {
+			users.add(u);
+		}
 	}
 
 	public static void addGroup(Group g) {
-		getGroups().add(g);
+		synchronized (groups) {
+			groups.add(g);
+		}
 	}
 
 	public static List<Message> getMessages() {
@@ -116,17 +131,47 @@ public class Warehouse {
 	public static void addUserToGroup(User u, Group g) {
 		if (g == null)
 			return;
-		if (g.members.contains(u))
-			return;
-		g.members.add(u);
+		synchronized (g) {
+			if (g.members.contains(u))
+				return;
+			g.members.add(u);
+		}
+	}
+	
+	public static List<Message> getMessages(User u, Contact c) {
+		return getMessages().stream().filter(x -> {
+			if(c.type.equals(ContactType.USER)) {
+				return x.from.equals(u) || x.toUser.equals(u);
+			}
+			if(x.toGroup != null) {
+				return x.toGroup.members.contains(u);
+			}
+			return false;
+		}).collect(Collectors.toList());
+	}
+
+	public static List<Contact> getContactsOf(User u) {
+		if (u == null)
+			return new ArrayList<Contact>();
+		List<Contact> contacts = getGroupsOfUser(u).stream().map(x -> new Contact(x.id + "", ContactType.GROUP))
+				.collect(Collectors.toList());
+		Set<String> usernames = new HashSet<String>();
+		getMessages().stream().forEach(x -> {
+			if (x.from.equals(u) && x.toUser != null) {
+				usernames.add(x.toUser.name);
+			}
+			if (x.toUser.equals(u)) {
+				usernames.add(x.from.name);
+			}
+		});
+		usernames.stream().forEach(x -> contacts.add(new Contact(x, ContactType.USER)));
+		return contacts;
 	}
 
 	public static List<Group> getGroupsOfUser(User u) {
 		if (u == null)
 			return new ArrayList<Group>();
-
-		return getMessages().stream().filter(x -> x.toGroup != null && x.toGroup.members.contains(u))
-				.map(x -> x.toGroup).collect(Collectors.toList());
+		return getGroups().stream().filter(x -> x.members.contains(u)).collect(Collectors.toList());
 	}
 
 	public static List<Message> getChatMessagesSorted(User a, User b) {
@@ -138,11 +183,11 @@ public class Warehouse {
 	public static boolean doesMessageExist(Message m) {
 		return getMessages().stream().filter(x -> x.equals(m)).count() > 0;
 	}
-	
+
 	public static boolean doesUserExist(String name) {
 		return getUsers().stream().filter(x -> x.name.equalsIgnoreCase(name)).count() > 0;
 	}
-	
+
 	public static boolean doesUserExist(User u) {
 		return getUsers().stream().filter(x -> x.equals(u)).count() > 0;
 	}

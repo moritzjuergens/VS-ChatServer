@@ -9,11 +9,16 @@ import java.util.List;
 
 import ChatSystem.CSLogger;
 import ChatSystem.ChatSystem;
+import ChatSystem.Entities.Contact;
+import ChatSystem.Entities.Message;
 import ChatSystem.Entities.ServerMessage;
+import ChatSystem.Entities.User;
+import ChatSystem.Frontend.Chat.Chat;
 
 public class Client extends Thread {
 
 	public static List<Client> registeredClients = new ArrayList<Client>();
+	public Chat chat;
 
 	String name = "Client";
 	Socket s;
@@ -83,6 +88,7 @@ public class Client extends Thread {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public void messageReceived(ServerMessage message) {
 		CSLogger.log(Client.class, "Message received: %s", message);
 		switch (message.prefix.toLowerCase()) {
@@ -92,10 +98,21 @@ public class Client extends Thread {
 		case "usernametaken":
 			ChatSystem.frameSignIn.usernameTaken();
 			break;
-		case "signedin":
-			System.out.println("Welcome " + message.object);
+		case "welcome":
+			User me = (User) message.object;
+			ChatSystem.frameSignIn.setVisible(false);
+			chat = new Chat(me, this);
+			sendMessage(new ServerMessage("getcontacts", me));
+			break;
+		case "contacts": 
+			List<Contact> contacts = (List<Contact>) message.object;
+			chat.updateContacts(contacts);
+			break;
+		case "messages": 
+			List<Message> messages = (List<Message>) message.object;
+			chat.updateMessage(messages);
 			break;
 		}
+			
 	}
-
 }

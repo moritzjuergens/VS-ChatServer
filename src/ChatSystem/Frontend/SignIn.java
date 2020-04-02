@@ -17,6 +17,7 @@ import ChatSystem.Client.Client;
 import ChatSystem.Entities.ServerMessage;
 import ChatSystem.Entities.SignInUp;
 
+@SuppressWarnings("serial")
 public class SignIn extends JFrame {
 
 	private JLabel labelInfo;
@@ -25,23 +26,23 @@ public class SignIn extends JFrame {
 	private Client client;
 
 	public SignIn(Client c) {
-		super("Client Login");
+		super("VS Chatsystem - Login");
 
 		this.client = c;
-		this.setSize(300, 200);
-		this.setDefaultCloseOperation(EXIT_ON_CLOSE);
-		this.setLocationRelativeTo(null);
+		setSize(300, 200);
+		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		setLocationRelativeTo(null);
 
 		labelInfo = new JLabel("", SwingConstants.CENTER);
-		fieldUsername = new JTextField();
-		fieldPassword = new JTextField();
+		fieldUsername = new JTextField("Timo");
+		fieldPassword = new JTextField("Pass");
 
 		JButton buttonSignUp = new JButton("Sign up");
 		JButton buttonSignIn = new JButton("Sign in");
 		JLabel labelUsername = new JLabel("Enter Username");
 		JLabel labelPassword = new JLabel("Enter Password");
 
-		this.setLayout(new BorderLayout());
+		setLayout(new BorderLayout());
 
 		JPanel panelUsername = new JPanel(new BorderLayout());
 		panelUsername.add(labelUsername, BorderLayout.PAGE_START);
@@ -59,9 +60,9 @@ public class SignIn extends JFrame {
 		panelInputs.add(panelUsername);
 		panelInputs.add(panelPassword);
 
-		this.add(panelInputs, BorderLayout.PAGE_START);
-		this.add(labelInfo, BorderLayout.CENTER);
-		this.add(panelButtons, BorderLayout.PAGE_END);
+		add(panelInputs, BorderLayout.PAGE_START);
+		add(labelInfo, BorderLayout.CENTER);
+		add(panelButtons, BorderLayout.PAGE_END);
 
 		buttonSignIn.addActionListener(new ActionListener() {
 			@Override

@@ -63,8 +63,7 @@ public class Message implements Comparable<Message>, Serializable {
 	}
 
 	public String toString() {
-		return this.timestamp + "\t" + this.from + "\t" + this.toUser != null ? this.toUser.name
-				: this.toGroup.id + "\t" + this.message + "\t";
+		return this.timestamp + "\t" + this.from.name + "\t" + (this.toUser != null ? this.toUser.name : this.toGroup.id) + "\t" + this.message;
 	}
 
 	@Override
