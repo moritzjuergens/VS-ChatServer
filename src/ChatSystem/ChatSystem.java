@@ -7,6 +7,7 @@ import ChatSystem.Client.Client;
 import ChatSystem.DWH.Warehouse;
 import ChatSystem.Entities.Message;
 import ChatSystem.Entities.User;
+import ChatSystem.Frontend.EmojiPopUp;
 import ChatSystem.Server.Server;
 
 public class ChatSystem {
@@ -14,6 +15,8 @@ public class ChatSystem {
 	@SuppressWarnings("unused")
 	public static void main(String[] args) throws UnsupportedEncodingException {
 		System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tT] [%4$-7s] %5$s %n");
+		
+		new EmojiPopUp();
 		
 		//AEEvent e = new AEEvent();
 		///e.initUI();

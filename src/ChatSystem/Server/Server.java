@@ -120,7 +120,7 @@ public class Server {
 				}
 				synchronized (users) {
 					u.out = out;
-					this.users.add(u);
+					this.registerClient(u);
 					sendMessage(out, new ServerMessage("welcome", u));
 				}
 
