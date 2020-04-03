@@ -1,5 +1,6 @@
 package ChatSystem;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 
 import ChatSystem.Client.Client;
@@ -11,8 +12,26 @@ import ChatSystem.Server.Server;
 public class ChatSystem {
 
 	@SuppressWarnings("unused")
-	public static void main(String[] args) {
+	public static void main(String[] args) throws UnsupportedEncodingException {
 		System.setProperty("java.util.logging.SimpleFormatter.format", "[%1$tT] [%4$-7s] %5$s %n");
+		
+		//AEEvent e = new AEEvent();
+		///e.initUI();
+		
+//		char c = '\uDC66';
+//		
+//		System.out.println(c);
+//		
+//		test t = new test();
+//		t.setVisible(true);
+//
+//		t.addMessage("s", "A baby\r\n" + 
+//				"👦 string with \uD83C\uDDEF\uD83C\uDDF2 Jamaica a 0x1F334 " + ((char) '\uDC66')  +  " \uD83C \uDFFFfew emojis!", false);
+//
+//		t.addMessage("Timo", "Was geht ab bei euch?", false);
+//		t.addMessage("Nico", "Nix, muss mich auf morgen vorbereiten", true);
+//		t.addMessage("Eger", "Ich rauch eine.", true);
+//		t.addMessage("Timo", "ok", false);
 
 		Warehouse.loadFiles();
 
@@ -31,10 +50,10 @@ public class ChatSystem {
 			new Server(7777);
 		}
 
-		// Warehouse.getMessages().stream().forEach(System.out::println);
-		
-		new Client();
+//		 Warehouse.getMessages().stream().forEach(System.out::println);
+
 //		new Client();
+		new Client();
 
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 			Server.closeAll();

@@ -5,6 +5,8 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -13,9 +15,12 @@ import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.SwingConstants;
 import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
+import javax.swing.text.StyledDocument;
 import javax.swing.text.StyledEditorKit;
 
 import ChatSystem.Entities.Contact;
@@ -81,7 +86,7 @@ public class ChatPanel extends JPanel {
 			chat.client.sendMessage(new ServerMessage("getalluser", chat.user.getContact()));
 			userListFrame.open("chat");
 		});
-		;
+
 		add(footer, BorderLayout.PAGE_END);
 
 	}
@@ -108,9 +113,23 @@ public class ChatPanel extends JPanel {
 
 		chatArea.setEditable(true);
 		int len = chatArea.getDocument().getLength();
+
 		chatArea.setCaretPosition(len);
 		chatArea.setCharacterAttributes(aset, false);
-		chatArea.replaceSelection(msg);
+		chatArea.replaceSelection("\n" + msg);
+
+		StyledDocument document = chatArea.getStyledDocument();
+		Style labelStyle = sc.getStyle(StyleContext.DEFAULT_STYLE);
+		Icon icon = new ImageIcon("./emojis/question-triangle – 1.png");
+		JLabel label = new JLabel(icon);
+		StyleConstants.setComponent(labelStyle, label);
+		try {
+			document.insertString(document.getLength(), "d", aset);
+			document.insertString(document.getLength(), "Ignored", labelStyle);
+		} catch (BadLocationException badLocationException) {
+			System.err.println("Oops");
+		}
+
 		chatArea.setEditable(false);
 	}
 
