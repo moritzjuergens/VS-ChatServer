@@ -5,7 +5,7 @@ public enum Emoji {
 	GRINNING_FACE("grinning-face.png", ":D");
 	BICEPS("Biceps.png", "biceps");
 	BROGLE("broccoli.png", "broccoli");
-	FIREFIGHTER("Eger.png", "Eger");
+	CIGARETTE("eger.png", "Eger");
 	EXPLODINGHEAD("exploding.png", "explodinghead");
 	FLOWER("Flower.png", "flower");
 	HEART("Heart.png"; "<3");
