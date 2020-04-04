@@ -12,8 +12,8 @@ import javax.swing.SwingConstants;
 
 import ChatSystem.Client.Client;
 import ChatSystem.Entities.ServerMessage;
-import ChatSystem.Entities.SignInUp;
 import ChatSystem.Frontend.ComponentFactory;
+import ChatSystem.Packets.SignInUpPacket;
 
 @SuppressWarnings("serial")
 public class LoginFrame extends JFrame {
@@ -78,7 +78,7 @@ public class LoginFrame extends JFrame {
 	private void loginRegister(String name, String password, boolean isLogin) {
 		if (name.length() == 0 || password.length() == 0)
 			return;
-		client.sendMessage(new ServerMessage("sign" + (isLogin ? "in" : "up"), new SignInUp(name, password)));
+		client.sendMessage(new ServerMessage("sign" + (isLogin ? "in" : "up"), new SignInUpPacket(name, password)));
 	}
 
 	public void wrongCredentials() {

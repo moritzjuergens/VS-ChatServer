@@ -10,14 +10,20 @@ public class Contact implements Serializable {
 
 	public String name;
 	public ContactType type;
+	public String shortName;
 
+	public Contact(String name, ContactType type, String shortName) {
+		this(name, type);
+		this.shortName = shortName;
+	}
+	
 	public Contact(String name, ContactType type) {
 		this.name = name;
 		this.type = type;
 	}
 
 	public enum ContactType {
-		USER(), GROUP();
+		USER(), GROUP(), SYSTEM();
 	}
 
 	@Override
@@ -39,11 +45,13 @@ public class Contact implements Serializable {
 	private void writeObject(ObjectOutputStream out) throws IOException {
 		out.writeObject(this.name);
 		out.writeObject(this.type);
+		out.writeObject(this.shortName);
 	}
 
 	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 		this.name = (String) in.readObject();
 		this.type = (ContactType) in.readObject();
+		this.shortName = (String) in.readObject();
 	}
 
 }

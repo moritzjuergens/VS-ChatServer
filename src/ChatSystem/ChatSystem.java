@@ -31,11 +31,13 @@ public class ChatSystem {
 		}
 
 		new Client();
+		new Client();
+		new Client();
 
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 			Server.closeAll();
 			Client.closeAll();
-			Warehouse.saveFiles();
+//			Warehouse.saveFiles();
 		}));
 	}
 

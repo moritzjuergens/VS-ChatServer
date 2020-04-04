@@ -13,6 +13,7 @@ import javax.swing.SwingConstants;
 
 import ChatSystem.Entities.Contact;
 import ChatSystem.Entities.Contact.ContactType;
+import ChatSystem.Entities.ServerMessage;
 import ChatSystem.Frontend.ChatManager;
 import ChatSystem.Frontend.ComponentFactory;
 
@@ -24,6 +25,9 @@ public class ContactPopUp extends JFrame {
 	private ChatManager manager;
 
 	public ContactPopUp(ChatManager manager) {
+		
+		this.manager = manager;
+		
 		setSize(200, 300);
 		setResizable(false);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -45,23 +49,23 @@ public class ContactPopUp extends JFrame {
 	}
 
 	public void open(boolean addToGroup) {
-		removeAll();
+		contactWrapper.removeAll();
+		contactWrapper.add(ComponentFactory.getLabel("Loading..."));
 		setLocationRelativeTo(null);
 		setVisible(true);
 		this.addToGroup = addToGroup;
-	}
-
-	public void removeAll() {
-		contactWrapper.removeAll();
+		manager.client.sendMessage(new ServerMessage("allcontacts", ""));
 	}
 
 	public void addContacts(List<Contact> contacts) {
+		contactWrapper.removeAll();
 		contacts.forEach(this::addContact);
 	}
 
 	private void addContact(Contact c) {
 		JButton button = ComponentFactory.getContact(" " + c.name, "", false, false, (e) -> {
 			manager.addContact(c, addToGroup);
+			setVisible(false);
 		});
 		String fileName = c.type.equals(ContactType.GROUP) ? "group" : "user";
 		button.setIcon(new ImageIcon("./assets/" + fileName + ".png"));

@@ -9,15 +9,17 @@ import java.util.concurrent.Executors;
 
 import ChatSystem.CSLogger;
 import ChatSystem.DWH.Warehouse;
-import ChatSystem.Entities.AddContact;
 import ChatSystem.Entities.Contact;
 import ChatSystem.Entities.Contact.ContactType;
 import ChatSystem.Entities.Group;
 import ChatSystem.Entities.Message;
-import ChatSystem.Entities.SendMessage;
 import ChatSystem.Entities.ServerMessage;
-import ChatSystem.Entities.SignInUp;
 import ChatSystem.Entities.User;
+import ChatSystem.Packets.AddToPacket;
+import ChatSystem.Packets.AllContactsPacket;
+import ChatSystem.Packets.CreateGroupPacket;
+import ChatSystem.Packets.SendMessagePacket;
+import ChatSystem.Packets.SignInUpPacket;
 import ChatSystem.Packets.WelcomePacket;
 
 public class Server {
@@ -25,6 +27,7 @@ public class Server {
 	public static List<Server> registeredServer = new ArrayList<Server>();
 	private List<User> users = new ArrayList<User>();
 	private ServerSocket ss;
+	public Contact system = new Contact("System", ContactType.SYSTEM);
 
 	public Server(int port) {
 
@@ -66,7 +69,7 @@ public class Server {
 	}
 
 	public void registerClient(User u, ObjectOutputStream out) {
-		if(users.contains(u)) {
+		if (users.contains(u)) {
 			this.sendMessage(out, new ServerMessage("alreadyconnected", ""));
 			return;
 		}
@@ -112,7 +115,7 @@ public class Server {
 		switch (message.prefix.toLowerCase()) {
 		case "signin":
 			synchronized (users) {
-				SignInUp data = (SignInUp) message.object;
+				SignInUpPacket data = (SignInUpPacket) message.object;
 				if (!Warehouse.doesUserExist(data.name)) {
 					sendMessage(out, new ServerMessage("wrongcredentials", null));
 					break;
@@ -130,7 +133,7 @@ public class Server {
 			break;
 		case "signup":
 			synchronized (users) {
-				SignInUp data = (SignInUp) message.object;
+				SignInUpPacket data = (SignInUpPacket) message.object;
 				if (Warehouse.doesUserExist(data.name)) {
 					sendMessage(out, new ServerMessage("usernametaken", null));
 					break;
@@ -141,43 +144,48 @@ public class Server {
 				}
 			}
 			break;
-		case "getalluser":
-			Contact sender = (Contact) message.object;
-			sendMessage(out, new ServerMessage("alluser", Warehouse.getAllUserWithout(sender.name)));
+		case "allcontacts":
+			sendMessage(out, new ServerMessage("allcontacts", new AllContactsPacket(Warehouse.getAllUser())));
 			break;
-		case "newcontact":
-			AddContact newC = (AddContact) message.object;
-			if (!Warehouse.getContactsOf(newC.who).contains(newC.whom)) {
-				Message m = new Message(newC.who, newC.whom, "Hi, I just added you as a new friend :)");
+		case "addto":
+			AddToPacket atp = (AddToPacket) message.object;
+			Contact invitee = atp.invitee;
+			if (atp.contact.type.equals(ContactType.GROUP)) {
+				Group g = Warehouse.getGroupById(atp.contact.name);
+				if (Warehouse.addUserToGroup(invitee, g)) {
+					Message m = new Message(system, atp.contact, invitee.name + " has joined the group!");
+					ServerMessage sm = new ServerMessage("message", m);
+					for (Contact c : g.members) {
+						sendMessage(Warehouse.getUser(c), sm);
+					}
+				}
+
+			} else {
+				Message m = new Message(atp.contact, invitee, "Hi, I'd like to chat with you :GRINNING_FACE:");
 				ServerMessage sm = new ServerMessage("message", m);
-				sendMessage(Warehouse.getUser(newC.who), sm);
-				sendMessage(Warehouse.getUser(newC.whom), sm);
+				sendMessage(out, sm);
+				sendMessage(out, new ServerMessage("openchat", invitee));
+				sendMessage(Warehouse.getUser(invitee), sm);
 			}
 			break;
-		case "newgroup":
-			AddContact newG = (AddContact) message.object;
-			Group g = new Group(newG.who, newG.whom);
-			// TODO: Anderen Server diese Gruppe schicken zum speichern
+		case "creategroup":
+			CreateGroupPacket cgp = (CreateGroupPacket) message.object;
+			Group g = new Group(cgp.user, cgp.chat, cgp.selected);
+
+			Message mc = new Message(system, g.getContact(), cgp.user.name + " created this group");
+			ServerMessage smc = new ServerMessage("message", mc);
 			for (Contact c : g.members) {
-				Message m = new Message(newG.who, g.getContact(), "invited " + c.name);
-				for (Contact c_ : g.members) {
-					sendMessage(Warehouse.getUser(c_), new ServerMessage("message", m));
+				Message m = new Message(system, g.getContact(), c.name + " has joined the group!");
+				ServerMessage sm = new ServerMessage("message", m);
+				sendMessage(Warehouse.getUser(c), smc);
+				for(Contact c_ : g.members) {
+					sendMessage(Warehouse.getUser(c_), sm);					
 				}
 			}
-			break;
-		case "addtogroup":
-			AddContact addG = (AddContact) message.object;
-			Group group = Warehouse.getGroupsById(addG.who.name).get(0);
-			if (Warehouse.addUserToGroup(addG.whom, group)) {
-				ServerMessage sm = new ServerMessage("message",
-						new Message(addG.whom, group.getContact(), "joined the group"));
-				for (Contact c : group.members) {
-					sendMessage(Warehouse.getUser(c), sm);
-				}
-			}
+			sendMessage(out, new ServerMessage("openchat", g.getContact()));			
 			break;
 		case "message":
-			SendMessage sm = (SendMessage) message.object;
+			SendMessagePacket sm = (SendMessagePacket) message.object;
 			Message m = new Message(sm.sender, sm.receiver, sm.message);
 			if (sm.receiver.type.equals(ContactType.GROUP)) {
 				for (Contact c : Warehouse.getGroupsById(sm.receiver.name).get(0).members) {

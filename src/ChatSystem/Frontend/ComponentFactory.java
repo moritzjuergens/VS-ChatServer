@@ -35,9 +35,11 @@ public class ComponentFactory {
 		return pane;
 	}
 
-	public static JButton getContact(String name, String latestMessage, boolean unread, boolean open, ActionListener l) {
-		JButton button = getButton("<html><body><b>" + name + "</b><br><font color=\""
-				+ (open ? "white" : (unread ? "#08f" : "silver")) + "\">" + latestMessage + "</font></body></html>",
+	public static JButton getContact(String name, String latestMessage, boolean unread, boolean open,
+			ActionListener l) {
+		JButton button = getButton(
+				"<html><body><b>" + name + "</b><br><font color=\"" + (open ? "white" : (unread ? "#08f" : "silver"))
+						+ "\"><code>" + latestMessage + "</code></font></body></html>",
 				open);
 		if (unread) {
 			button.setBorder(BorderFactory.createLineBorder(blue, 1, true));
@@ -46,7 +48,7 @@ public class ComponentFactory {
 		button.addActionListener(l);
 		return button;
 	}
-	
+
 	public static JLabel getContactSpacer() {
 		return getLabel(" ");
 	}

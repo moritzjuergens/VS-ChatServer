@@ -8,10 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ChatSystem.CSLogger;
+import ChatSystem.Entities.Contact;
 import ChatSystem.Entities.Message;
 import ChatSystem.Entities.ServerMessage;
 import ChatSystem.Frontend.ChatManager;
 import ChatSystem.Frontend.Frames.LoginFrame;
+import ChatSystem.Packets.AllContactsPacket;
 import ChatSystem.Packets.WelcomePacket;
 
 public class Client extends Thread {
@@ -97,17 +99,17 @@ public class Client extends Thread {
 			loginFrame.alreadyConnected();
 			break;
 		case "welcome":
-			WelcomePacket packet = (WelcomePacket) message.object;
 			loginFrame.setVisible(false);
-			chat = new ChatManager(packet, this);
+			chat = new ChatManager((WelcomePacket) message.object, this);
 			break;
-		case "alluser":
-//			List<Contact> users = (List<Contact>) message.object;
-//			chat.updateUserList(users);
+		case "allcontacts":
+			chat.contactListReceived(((AllContactsPacket) message.object).clients);
 			break;
 		case "message":
-			Message m = (Message) message.object;
-			chat.messageReceived(m);
+			chat.messageReceived((Message) message.object);
+			break;
+		case "openchat":
+			chat.openChatWith((Contact) message.object);
 			break;
 		}
 	}

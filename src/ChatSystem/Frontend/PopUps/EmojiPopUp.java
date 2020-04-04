@@ -36,11 +36,11 @@ public class EmojiPopUp extends JFrame {
 				Image image = ImageIO.read(new File("./emojis/" + emoji.name));
 				background.add(ComponentFactory.getButton(new ImageIcon(image.getScaledInstance(32, 32, 0)), false, 0,
 						0, 10, 10, (e) -> {
-							manager.emojiPicket(emoji);
+							manager.emojiPicked(emoji);
 							setVisible(false);
 						}));
 			} catch (IOException e1) {
-				System.out.println(emoji.name + ": Filed does not exist!");
+				System.out.println(emoji.name + ": File does not exist!");
 			}
 		});
 	}

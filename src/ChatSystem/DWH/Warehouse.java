@@ -9,9 +9,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import ChatSystem.CSLogger;
@@ -93,12 +91,12 @@ public class Warehouse {
 	}
 
 	public static void addUser(User u) {
-		System.out.println("Trying to create User " + u);
-		if (doesUserExist(u)) {
-			System.err.println("User already exists");
+		CSLogger.log(Warehouse.class, "Trying to create User %s", u);
+		if (doesUserExist(u.name)) {
+			CSLogger.log(Warehouse.class, "User already exists", "");
 			return;
 		}
-		System.out.println("User created and stored in DB");
+		CSLogger.log(Warehouse.class, "User created and stored in DB", "");
 		synchronized (users) {
 			users.add(u);
 		}
@@ -123,17 +121,14 @@ public class Warehouse {
 	public static List<Group> getGroups() {
 		return groups;
 	}
-	
-	public static List<Contact> getAllUser() {
-		return getUsers().stream().map(x -> new Contact(x.name, ContactType.USER)).collect(Collectors.toList());
-	}
 
-	public static List<Contact> getAllUserWithout(String name) {
-		return getAllUser().stream().filter(x -> !x.name.equals(name)).collect(Collectors.toList());
+	public static List<Contact> getAllUser() {
+		return getUsers().stream().map(x -> x.getContact()).collect(Collectors.toList());
 	}
 
 	public static HashMap<Contact, List<Message>> getUserData(User u) {
 		HashMap<Contact, List<Message>> data = new HashMap<>();
+
 		List<Contact> contacts = getContactsOf(u.getContact());
 		contacts.stream().forEach(c -> data.put(c, getMessages(u.getContact(), c)));
 		return data;
@@ -151,77 +146,67 @@ public class Warehouse {
 	}
 
 	public static boolean addUserToGroup(Contact c, Group g) {
-		if (g == null)
-			return false;
+
 		synchronized (groups) {
-			if (g.members.contains(c))
+			if (g == null || g.members.stream().filter(x -> x.equals(c)).count() > 0) {
 				return false;
+			}
 			g.members.add(c);
 			return true;
 		}
 	}
 
-	public static List<Message> getMessages(Contact a, Contact b) {
-		return getMessages().stream().filter(
-				x -> (x.sender.equals(a) && x.receiver.equals(b)) || (x.sender.equals(b) && x.receiver.equals(a)))
-				.collect(Collectors.toList());
+	public static List<Message> getMessages(Contact user, Contact chat) {
+		return getMessages().stream().filter(x -> {
+			if (x.receiver.type.equals(ContactType.GROUP) && x.receiver.equals(chat)) {
+				return true;
+			}
+			return (x.receiver.equals(user) && x.sender.equals(chat))
+					|| (x.receiver.equals(chat) && x.sender.equals(user));
+		}).collect(Collectors.toList());
 	}
 
 	public static List<Group> getGroupsById(String id) {
 		return getGroups().stream().filter(x -> id.equals(x.id + "")).collect(Collectors.toList());
 	}
 
+	public static Group getGroupById(String id) {
+		return getGroupsById(id).get(0);
+	}
+
 	public static List<Contact> getContactsOf(Contact c) {
-		if (c == null)
-			return new ArrayList<Contact>();
+		ArrayList<Contact> contacts = new ArrayList<>();
+		if (c == null) {
+			return contacts;
+		}
 
-		Set<String> names = new HashSet<String>();
-		List<Contact> contacts = getGroupsOfContact(c).stream().map(x -> new Contact(x.id + "", ContactType.GROUP))
-				.collect(Collectors.toList());
-		getMessages().stream().filter(x -> x.receiver.type.equals(ContactType.USER)).forEach(x -> {
-			if (x.sender.equals(c)) {
-				names.add(x.receiver.name);
-			}
-			if (x.receiver.equals(c)) {
-				names.add(x.sender.name);
-			}
-		});
-		names.forEach(x -> contacts.add(new Contact(x, ContactType.USER)));
-
+		getPrivatChatsOfContact(c).forEach(contacts::add);
+		getGroupsOfContact(c).stream().map(x -> x.getContact()).forEach(contacts::add);
 		return contacts;
 	}
 
+	public static List<Contact> getPrivatChatsOfContact(Contact c) {
+		if (c == null) {
+			return new ArrayList<Contact>();
+		}
+		return getMessages().stream().filter(x -> x.receiver.type.equals(ContactType.USER))
+				.filter(x -> x.sender.equals(c) || x.receiver.equals(c))
+				.map(x -> x.sender.equals(c) ? x.receiver.name : x.sender.name).distinct().map(x -> new Contact(x, ContactType.USER)).collect(Collectors.toList());
+	}
+
 	public static List<Group> getGroupsOfContact(Contact c) {
-		if (c == null)
+		if (c == null) {
 			return new ArrayList<Group>();
-		return getGroups().stream().filter(x -> x.members.contains(c)).collect(Collectors.toList());
-	}
-
-	public static List<Message> getChatMessagesSorted(Contact a, Contact b) {
-		return getMessages().stream().filter(
-				x -> ((x.sender.equals(a) && x.receiver.equals(b)) || (x.sender.equals(b) && x.receiver.equals(a))))
-				.sorted().collect(Collectors.toList());
-	}
-
-	public static boolean doesMessageExist(Message m) {
-		return getMessages().stream().filter(x -> x.equals(m)).count() > 0;
+		}
+		return getGroups().stream().filter(x -> x.members.stream().filter(y -> y.equals(c)).count() > 0)
+				.collect(Collectors.toList());
 	}
 
 	public static boolean doesUserExist(String name) {
 		return getUsers().stream().filter(x -> x.name.equalsIgnoreCase(name)).count() > 0;
 	}
 
-	public static boolean doesUserExist(User u) {
-		return getUsers().stream().filter(x -> x.equals(u)).count() > 0;
-	}
-
 	public static boolean doesGroupExsits(Group g) {
 		return getGroups().stream().filter(x -> x.equals(g)).count() > 0;
-	}
-
-	public static List<Message> getGroupMessages(Group g) {
-		return getMessages().stream()
-				.filter(x -> x.receiver.type.equals(ContactType.GROUP) && x.receiver.name.equals(g.id))
-				.collect(Collectors.toList());
 	}
 }

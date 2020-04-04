@@ -12,10 +12,8 @@ import javax.swing.text.StyledDocument;
 public class EmojiChatManager {
 
 	public static void changed(JTextPane chatPane) {
-		System.err.println("Changed");
 
 		StyledDocument document = chatPane.getStyledDocument();
-
 		try {
 			String text = document.getText(0, document.getLength());
 			int start = -1;
@@ -49,8 +47,6 @@ public class EmojiChatManager {
 			System.out.println("Something went wrong");
 			e.printStackTrace();
 		}
-		System.out.println("Change END");
-
 	}
 
 }

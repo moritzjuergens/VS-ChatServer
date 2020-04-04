@@ -2,6 +2,8 @@ package ChatSystem.Frontend.Frames;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -21,12 +23,12 @@ import javax.swing.text.StyleContext;
 import ChatSystem.Entities.Contact;
 import ChatSystem.Entities.Contact.ContactType;
 import ChatSystem.Entities.Message;
-import ChatSystem.Entities.SendMessage;
 import ChatSystem.Entities.ServerMessage;
 import ChatSystem.Frontend.ChatManager;
 import ChatSystem.Frontend.ComponentFactory;
 import ChatSystem.Frontend.Emoji.Emoji;
 import ChatSystem.Frontend.Emoji.EmojiChatManager;
+import ChatSystem.Packets.SendMessagePacket;
 
 @SuppressWarnings("serial")
 public class ChatFrame extends JFrame {
@@ -54,7 +56,7 @@ public class ChatFrame extends JFrame {
 		background.setLayout(null);
 
 		background.add(ComponentFactory.getButton(new ImageIcon("./assets/contact.png"), false, 6, 6, 25, 25, (e) -> {
-
+			manager.contactPopUp.open(false);
 		}));
 
 		background.add(chatTitle);
@@ -73,10 +75,11 @@ public class ChatFrame extends JFrame {
 
 	public void sendMessage() {
 		String message = textField.getText();
-		if (message.length() < 0)
+		if (message.length() == 0) {
 			return;
-		manager.client.sendMessage(
-				new ServerMessage("message", new SendMessage(manager.user.getContact(), currentContact, message)));
+		}
+		manager.client.sendMessage(new ServerMessage("message",
+				new SendMessagePacket(manager.user.getContact(), currentContact, message)));
 		textField.setText("");
 	}
 
@@ -93,26 +96,51 @@ public class ChatFrame extends JFrame {
 	}
 
 	public void addMessage(Message m) {
-		
-		String msg = (manager.user.name.equals(m.sender.name) ? "You: "
-				: (currentContact.type.equals(ContactType.GROUP) ? m.sender.name + ": " : "")) + m.message + "\n";
-		Color c = manager.user.name.equals(m.sender.name) ? new Color(37, 202, 73) : new Color(0, 136, 255);
-		StyleContext sc = StyleContext.getDefaultStyleContext();
-		AttributeSet aset = sc.addAttribute(SimpleAttributeSet.EMPTY, StyleConstants.Foreground, c);
 
-		aset = sc.addAttribute(aset, StyleConstants.Alignment, StyleConstants.ALIGN_JUSTIFIED);
-		aset = sc.addAttribute(aset, StyleConstants.FontFamily, "Lucida Console");
+		String prefix = "";
+		if (m.sender.type.equals(ContactType.SYSTEM)) {
+			prefix = "[" + m.sender.name + "] ";
+		} else if (m.receiver.type.equals(ContactType.GROUP) || true) {
+			prefix = m.sender.name + ": ";
+		}
+		if (m.sender.equals(manager.user.getContact())) {
+			prefix = "You: ";
+		}
+		Color c = new Color(0, 136, 255);
+		if (prefix.equalsIgnoreCase("You: ")) {
+			c = new Color(37, 202, 73);
+		} else if (m.sender.type.equals(ContactType.SYSTEM)) {
+			c = new Color(231, 76, 60);
+		}
+		String msg = m.message + "\n";
 
 		chatPane.setEditable(true);
-		int len = chatPane.getDocument().getLength();
 
-		chatPane.setCaretPosition(len);
+		StyleContext sc = StyleContext.getDefaultStyleContext();
+		AttributeSet aset = sc.addAttribute(SimpleAttributeSet.EMPTY, StyleConstants.Alignment,
+				StyleConstants.ALIGN_JUSTIFIED);
+		aset = sc.addAttribute(aset, StyleConstants.FontFamily, "Arial");
+
+		aset = sc.addAttribute(aset, StyleConstants.Foreground, c);
+		aset = sc.addAttribute(aset, StyleConstants.Bold, true);
+		
+		chatPane.setCaretPosition(chatPane.getDocument().getLength());
+		chatPane.setCharacterAttributes(aset, false);
+		chatPane.replaceSelection("\n[" + getDate(m.timestamp) + "] " + prefix);
+
+		aset = sc.addAttribute(aset, StyleConstants.Foreground, Color.WHITE);
+		aset = sc.addAttribute(aset, StyleConstants.Bold, false);
+		
+		chatPane.setCaretPosition(chatPane.getDocument().getLength());
 		chatPane.setCharacterAttributes(aset, false);
 		chatPane.replaceSelection("\n" + msg);
-		
+
 		EmojiChatManager.changed(chatPane);
 		chatPane.setEditable(false);
 		
+		chatPane.selectAll();
+		int x = chatPane.getSelectionEnd();
+		chatPane.select(x,x);
 	}
 
 	public void updateContacts(HashMap<Contact, List<Message>> chatData) {
@@ -123,7 +151,7 @@ public class ChatFrame extends JFrame {
 			String name = (m.sender.name.equals(manager.user.name) ? "You: " : "");
 
 			contactWrapper
-					.add(ComponentFactory.getContact(c.name, name + m.message, false, c.equals(currentContact), (e) -> {
+					.add(ComponentFactory.getContact(c.type.equals(ContactType.GROUP) ? c.shortName : c.name, name + m.message, false, c.equals(currentContact), (e) -> {
 						manager.openChatWith(c);
 					}));
 			contactWrapper.add(ComponentFactory.getContactSpacer());
@@ -135,10 +163,13 @@ public class ChatFrame extends JFrame {
 		if (this.currentContact == null) {
 			background.add(
 					ComponentFactory.getButton(new ImageIcon("./assets/addToGroup.png"), true, 555, 6, 25, 25, (e) -> {
-
+						manager.contactPopUp.open(true);
 					}));
 			background.add(ComponentFactory.getLabel("Message", 203, 334, 70, 25));
 
+			textField.addActionListener((e) -> {
+				sendMessage();
+			});
 			background.add(textField);
 
 			background.add(ComponentFactory.getButton("Send", true, 495, 334, 50, 25, (e) -> {
@@ -153,8 +184,18 @@ public class ChatFrame extends JFrame {
 		}
 
 		this.currentContact = c;
-		chatTitle.setText("Chatting with: " + c.name);
+		if(c.type.equals(ContactType.GROUP)) {
+			chatTitle.setText("Group: " + c.shortName);
+		}
+		else {			
+			chatTitle.setText("Chatting with: " + c.name);
+		}
 		this.removeAllMessages();
+	}
+
+	public String getDate(long time) {
+		SimpleDateFormat format = new SimpleDateFormat("dd.MM.YY HH:mm");
+		return format.format(new Date(time));
 	}
 
 }

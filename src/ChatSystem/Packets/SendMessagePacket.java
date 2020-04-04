@@ -1,18 +1,20 @@
-package ChatSystem.Entities;
+package ChatSystem.Packets;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
+import ChatSystem.Entities.Contact;
+
 @SuppressWarnings("serial")
-public class SendMessage implements Serializable {
+public class SendMessagePacket implements Serializable {
 
 	public Contact sender;
 	public Contact receiver;
 	public String message;
 
-	public SendMessage(Contact sender, Contact receiver, String message) {
+	public SendMessagePacket(Contact sender, Contact receiver, String message) {
 		this.sender = sender;
 		this.receiver = receiver;
 		this.message = message;
