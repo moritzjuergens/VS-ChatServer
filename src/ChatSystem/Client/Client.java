@@ -8,26 +8,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ChatSystem.CSLogger;
-import ChatSystem.Entities.Contact;
 import ChatSystem.Entities.Message;
 import ChatSystem.Entities.ServerMessage;
-import ChatSystem.Entities.User;
-import ChatSystem.Frontend.SignIn;
-import ChatSystem.Frontend.Chat.Chat;
+import ChatSystem.Frontend.ChatManager;
+import ChatSystem.Frontend.Frames.LoginFrame;
+import ChatSystem.Packets.WelcomePacket;
 
 public class Client extends Thread {
 
 	public static List<Client> registeredClients = new ArrayList<Client>();
-	public Chat chat;
+	public ChatManager chat;
 
 	Socket s;
 	ObjectInputStream in;
 	ObjectOutputStream out;
-	SignIn frameSignIn;
+
+	LoginFrame loginFrame;
 
 	public Client() {
 
-		this.frameSignIn = new SignIn(this);
+		this.loginFrame = new LoginFrame(this);
 
 		new Thread(() -> {
 
@@ -84,33 +84,26 @@ public class Client extends Thread {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public void messageReceived(ServerMessage message) {
 		CSLogger.log(Client.class, "Message received: %s", message);
 		switch (message.prefix.toLowerCase()) {
 		case "wrongcredentials":
-			frameSignIn.wrongCredentials();
+			loginFrame.wrongCredentials();
 			break;
 		case "usernametaken":
-			frameSignIn.usernameTaken();
+			loginFrame.usernameTaken();
+			break;
+		case "alreadyconnected": 
+			loginFrame.alreadyConnected();
 			break;
 		case "welcome":
-			User me = (User) message.object;
-			frameSignIn.setVisible(false);
-			chat = new Chat(me, this);
-			sendMessage(new ServerMessage("getcontacts", me.getContact()));
-			break;
-		case "contacts":
-			List<Contact> contacts = (List<Contact>) message.object;
-			chat.updateContacts(contacts);
-			break;
-		case "messages":
-			List<Message> messages = (List<Message>) message.object;
-			chat.setMessages(messages);
+			WelcomePacket packet = (WelcomePacket) message.object;
+			loginFrame.setVisible(false);
+			chat = new ChatManager(packet, this);
 			break;
 		case "alluser":
-			List<Contact> users = (List<Contact>) message.object;
-			chat.updateUserList(users);
+//			List<Contact> users = (List<Contact>) message.object;
+//			chat.updateUserList(users);
 			break;
 		case "message":
 			Message m = (Message) message.object;

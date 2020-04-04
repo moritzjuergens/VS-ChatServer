@@ -14,11 +14,11 @@ import ChatSystem.Entities.Contact;
 import ChatSystem.Entities.Contact.ContactType;
 import ChatSystem.Entities.Group;
 import ChatSystem.Entities.Message;
-import ChatSystem.Entities.Messages;
 import ChatSystem.Entities.SendMessage;
 import ChatSystem.Entities.ServerMessage;
 import ChatSystem.Entities.SignInUp;
 import ChatSystem.Entities.User;
+import ChatSystem.Packets.WelcomePacket;
 
 public class Server {
 
@@ -65,8 +65,14 @@ public class Server {
 		}
 	}
 
-	public void registerClient(User u) {
-
+	public void registerClient(User u, ObjectOutputStream out) {
+		if(users.contains(u)) {
+			this.sendMessage(out, new ServerMessage("alreadyconnected", ""));
+			return;
+		}
+		u.out = out;
+		users.add(u);
+		this.sendMessage(out, new ServerMessage("welcome", new WelcomePacket(u, Warehouse.getUserData(u))));
 	}
 
 	public void unregisterClient(User u) {
@@ -82,14 +88,12 @@ public class Server {
 	}
 
 	public void sendMessage(User u, ServerMessage m) {
-		System.out.println("Nachricht an " + u.name);
+		CSLogger.log(Server.class, "Sending %s to %s", m, u.getContact());
 		try {
 			if (users.contains(u)) {
-				System.out.println("existiert");
 				u.out.writeObject(m);
 			} else {
 				// TODO: Anderen Servern nachricht schicken
-				System.out.println("existiert nicht");
 			}
 		} catch (IOException e) {
 		}
@@ -119,9 +123,7 @@ public class Server {
 					break;
 				}
 				synchronized (users) {
-					u.out = out;
-					this.registerClient(u);
-					sendMessage(out, new ServerMessage("welcome", u));
+					this.registerClient(u, out);
 				}
 
 			}
@@ -135,19 +137,9 @@ public class Server {
 				}
 				User u = new User(data.name, data.password);
 				synchronized (users) {
-					u.out = out;
-					this.users.add(u);
-					sendMessage(out, new ServerMessage("welcome", u));
+					this.registerClient(u, out);
 				}
 			}
-			break;
-		case "getcontacts":
-			Contact target = (Contact) message.object;
-			sendMessage(out, new ServerMessage("contacts", Warehouse.getContactsOf(target)));
-			break;
-		case "getmessages":
-			Messages messages = (Messages) message.object;
-			sendMessage(out, new ServerMessage("messages", Warehouse.getMessages(messages.user, messages.contact)));
 			break;
 		case "getalluser":
 			Contact sender = (Contact) message.object;
@@ -187,7 +179,6 @@ public class Server {
 		case "message":
 			SendMessage sm = (SendMessage) message.object;
 			Message m = new Message(sm.sender, sm.receiver, sm.message);
-			System.out.println("new messagess");
 			if (sm.receiver.type.equals(ContactType.GROUP)) {
 				for (Contact c : Warehouse.getGroupsById(sm.receiver.name).get(0).members) {
 					sendMessage(Warehouse.getUser(c), new ServerMessage("message", m));

@@ -1,4 +1,4 @@
-package ChatSystem;
+package ChatSystem.Frontend.Emoji;
 
 public enum Emoji {
 
@@ -18,6 +18,15 @@ public enum Emoji {
 	Emoji(String name, String shortcut) {
 		this.name = name;
 		this.shortcut = shortcut;
+	}
+	
+	public static Emoji forName(String name) {
+		for(Emoji e : Emoji.values()) {
+			if(e.toString().equals(name)) {
+				return e;
+			}
+		}
+		return null;
 	}
 
 }

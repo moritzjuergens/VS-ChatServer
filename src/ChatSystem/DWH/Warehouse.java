@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -122,7 +123,7 @@ public class Warehouse {
 	public static List<Group> getGroups() {
 		return groups;
 	}
-
+	
 	public static List<Contact> getAllUser() {
 		return getUsers().stream().map(x -> new Contact(x.name, ContactType.USER)).collect(Collectors.toList());
 	}
@@ -131,17 +132,25 @@ public class Warehouse {
 		return getAllUser().stream().filter(x -> !x.name.equals(name)).collect(Collectors.toList());
 	}
 
+	public static HashMap<Contact, List<Message>> getUserData(User u) {
+		HashMap<Contact, List<Message>> data = new HashMap<>();
+		List<Contact> contacts = getContactsOf(u.getContact());
+		contacts.stream().forEach(c -> data.put(c, getMessages(u.getContact(), c)));
+		return data;
+	}
+
 	public static User getUser(String name) {
 		List<User> usersFound = getUsers().stream().filter(x -> x.name.equals(name)).collect(Collectors.toList());
 		if (usersFound.size() == 0)
 			return null;
 		return usersFound.get(0);
 	}
+
 	public static User getUser(Contact c) {
 		return getUser(c.name);
 	}
 
-	public static boolean addUserToGroup(Contact c, Group g){
+	public static boolean addUserToGroup(Contact c, Group g) {
 		if (g == null)
 			return false;
 		synchronized (groups) {

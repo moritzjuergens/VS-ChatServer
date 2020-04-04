@@ -1,4 +1,4 @@
-package ChatSystem.Frontend.Chat.Frames;
+package ChatSystem.Frontend.Frames;
 
 import java.util.List;
 
@@ -11,19 +11,18 @@ import javax.swing.JScrollPane;
 import ChatSystem.Client.Client;
 import ChatSystem.Entities.AddContact;
 import ChatSystem.Entities.Contact;
-import ChatSystem.Entities.Contact.ContactType;
 import ChatSystem.Entities.ServerMessage;
-import ChatSystem.Frontend.Chat.Chat;
+import ChatSystem.Frontend.ChatManager;
 
 @SuppressWarnings("serial")
 public class UserListFrame extends JFrame {
 
 	JPanel userList = new JPanel();
 	Client client;
-	Chat chat;
+	ChatManager chat;
 	String origin;
 
-	public UserListFrame(Client client, Chat chat) {
+	public UserListFrame(Client client, ChatManager chat) {
 		this.client = client;
 		this.chat = chat;
 
@@ -54,11 +53,11 @@ public class UserListFrame extends JFrame {
 		if (origin.equals("contacts")) {
 			client.sendMessage(new ServerMessage("newcontact", new AddContact(chat.user.getContact(), c)));
 		} else {
-			if (chat.getCurrentContact().type.equals(ContactType.GROUP)) {
-				client.sendMessage(new ServerMessage("addtogroup", new AddContact(chat.getCurrentContact(), c)));
-			} else {
-				client.sendMessage(new ServerMessage("newgroup", new AddContact(chat.user.getContact(), c)));
-			}
+//			if (chat.getCurrentContact().type.equals(ContactType.GROUP)) {
+//				client.sendMessage(new ServerMessage("addtogroup", new AddContact(chat.getCurrentContact(), c)));
+//			} else {
+//				client.sendMessage(new ServerMessage("newgroup", new AddContact(chat.user.getContact(), c)));
+//			}
 		}
 		this.setVisible(false);
 	}
