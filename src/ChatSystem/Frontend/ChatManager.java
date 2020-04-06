@@ -1,17 +1,27 @@
 package ChatSystem.Frontend;
 
+import java.awt.AWTException;
+import java.awt.Image;
+import java.awt.SystemTray;
+import java.awt.TrayIcon;
+import java.awt.TrayIcon.MessageType;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.imageio.ImageIO;
+
 import ChatSystem.Client.Client;
 import ChatSystem.Entities.Contact;
+import ChatSystem.Entities.Contact.ContactType;
 import ChatSystem.Entities.Message;
 import ChatSystem.Entities.ServerMessage;
 import ChatSystem.Entities.User;
-import ChatSystem.Entities.Contact.ContactType;
 import ChatSystem.Frontend.Emoji.Emoji;
 import ChatSystem.Frontend.Frames.ChatFrame;
 import ChatSystem.Frontend.PopUps.ContactPopUp;
@@ -76,6 +86,13 @@ public class ChatManager {
 	}
 
 	public void messageReceived(Message m) {
+		if (!chatFrame.isFocused()) {
+			sendNotification(m.sender.name + " send you a message", m.message, (e) -> {
+				chatFrame.requestFocus();
+				openChatWith(m.sender);
+			});
+		}
+
 		Contact contact = m.receiver;
 		if (contact.name.equals(user.name)) {
 			contact = m.sender;
@@ -135,5 +152,19 @@ public class ChatManager {
 
 	public void emojiPicked(Emoji emoji) {
 		chatFrame.insertEmoji(emoji);
+	}
+
+	public void sendNotification(String title, String message, ActionListener l) {
+		SystemTray tray = SystemTray.getSystemTray();
+		try {
+			Image image = ImageIO.read(new File("./emojis/" + Emoji.BICEPS.name));
+			TrayIcon trayIcon = new TrayIcon(image, "");
+			trayIcon.setImageAutoSize(true);
+			tray.add(trayIcon);
+			trayIcon.addActionListener(l);
+			trayIcon.displayMessage(title, message, MessageType.INFO);
+		} catch (IOException | AWTException e) {
+			e.printStackTrace();
+		}
 	}
 }
