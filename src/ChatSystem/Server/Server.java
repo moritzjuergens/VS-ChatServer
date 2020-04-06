@@ -6,6 +6,7 @@ import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import ChatSystem.CSLogger;
 import ChatSystem.DWH.Warehouse;
@@ -70,7 +71,7 @@ public class Server {
 
 	public void registerClient(User u, ObjectOutputStream out) {
 		if (users.contains(u)) {
-			this.sendMessage(out, new ServerMessage("alreadyconnected", ""));
+			this.sendMessage(out, new ServerMessage("signresponse", "You're already signed in"));
 			return;
 		}
 		u.out = out;
@@ -117,12 +118,12 @@ public class Server {
 			synchronized (users) {
 				SignInUpPacket data = (SignInUpPacket) message.object;
 				if (!Warehouse.doesUserExist(data.name)) {
-					sendMessage(out, new ServerMessage("wrongcredentials", null));
+					sendMessage(out, new ServerMessage("signresponse", "Username or Password incorrect"));
 					break;
 				}
 				User u = Warehouse.getUser(data.name);
 				if (!(u.name.equals(data.name) && u.password.equals(data.password))) {
-					sendMessage(out, new ServerMessage("wrongcredentials", null));
+					sendMessage(out, new ServerMessage("signresponse", "Username or Password incorrect"));
 					break;
 				}
 				synchronized (users) {
@@ -135,13 +136,19 @@ public class Server {
 			synchronized (users) {
 				SignInUpPacket data = (SignInUpPacket) message.object;
 				if (Warehouse.doesUserExist(data.name)) {
-					sendMessage(out, new ServerMessage("usernametaken", null));
+					sendMessage(out, new ServerMessage("signresponse", "Username already taken"));
 					break;
 				}
 				User u = new User(data.name, data.password);
 				synchronized (users) {
 					this.registerClient(u, out);
 				}
+			}
+			break;
+		case "logoff": 
+			if(message.object == null) break;
+			synchronized (users) {
+				users = users.stream().filter(x -> !x.equals((User) message.object)).collect(Collectors.toList());
 			}
 			break;
 		case "allcontacts":

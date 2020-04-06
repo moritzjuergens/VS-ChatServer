@@ -24,6 +24,7 @@ import ChatSystem.Entities.Contact;
 import ChatSystem.Entities.Contact.ContactType;
 import ChatSystem.Entities.Message;
 import ChatSystem.Entities.ServerMessage;
+import ChatSystem.Frontend.ChatFrameListener;
 import ChatSystem.Frontend.ChatManager;
 import ChatSystem.Frontend.ComponentFactory;
 import ChatSystem.Frontend.Emoji.Emoji;
@@ -48,7 +49,7 @@ public class ChatFrame extends JFrame {
 		setTitle("VS Chatsystem - Signed in as " + manager.user.name);
 		setSize(600, 400);
 		setResizable(false);
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setLocationRelativeTo(null);
 		setLayout(new BorderLayout());
 
@@ -71,6 +72,8 @@ public class ChatFrame extends JFrame {
 		background.add(ComponentFactory.getScrollPane(this.contactWrapper, 0, 35, 192, 327));
 
 		setVisible(true);
+
+		addWindowListener(new ChatFrameListener(manager));
 	}
 
 	public void sendMessage() {
@@ -123,24 +126,24 @@ public class ChatFrame extends JFrame {
 
 		aset = sc.addAttribute(aset, StyleConstants.Foreground, c);
 		aset = sc.addAttribute(aset, StyleConstants.Bold, true);
-		
+
 		chatPane.setCaretPosition(chatPane.getDocument().getLength());
 		chatPane.setCharacterAttributes(aset, false);
 		chatPane.replaceSelection("\n[" + getDate(m.timestamp) + "] " + prefix);
 
 		aset = sc.addAttribute(aset, StyleConstants.Foreground, Color.WHITE);
 		aset = sc.addAttribute(aset, StyleConstants.Bold, false);
-		
+
 		chatPane.setCaretPosition(chatPane.getDocument().getLength());
 		chatPane.setCharacterAttributes(aset, false);
 		chatPane.replaceSelection("\n" + msg);
 
 		EmojiChatManager.changed(chatPane);
 		chatPane.setEditable(false);
-		
+
 		chatPane.selectAll();
 		int x = chatPane.getSelectionEnd();
-		chatPane.select(x,x);
+		chatPane.select(x, x);
 	}
 
 	public void updateContacts(HashMap<Contact, List<Message>> chatData) {
@@ -150,8 +153,8 @@ public class ChatFrame extends JFrame {
 			Message m = manager.getLatestMessageWith(c);
 			String name = (m.sender.name.equals(manager.user.name) ? "You: " : "");
 
-			contactWrapper
-					.add(ComponentFactory.getContact(c.type.equals(ContactType.GROUP) ? c.shortName : c.name, name + m.message, false, c.equals(currentContact), (e) -> {
+			contactWrapper.add(ComponentFactory.getContact(c.type.equals(ContactType.GROUP) ? c.shortName : c.name,
+					name + m.message, false, c.equals(currentContact), (e) -> {
 						manager.openChatWith(c);
 					}));
 			contactWrapper.add(ComponentFactory.getContactSpacer());
@@ -184,10 +187,9 @@ public class ChatFrame extends JFrame {
 		}
 
 		this.currentContact = c;
-		if(c.type.equals(ContactType.GROUP)) {
+		if (c.type.equals(ContactType.GROUP)) {
 			chatTitle.setText("Group: " + c.shortName);
-		}
-		else {			
+		} else {
 			chatTitle.setText("Chatting with: " + c.name);
 		}
 		this.removeAllMessages();

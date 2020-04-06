@@ -89,14 +89,8 @@ public class Client extends Thread {
 	public void messageReceived(ServerMessage message) {
 		CSLogger.log(Client.class, "Message received: %s", message);
 		switch (message.prefix.toLowerCase()) {
-		case "wrongcredentials":
-			loginFrame.wrongCredentials();
-			break;
-		case "usernametaken":
-			loginFrame.usernameTaken();
-			break;
-		case "alreadyconnected": 
-			loginFrame.alreadyConnected();
+		case "signresponse":
+			loginFrame.signResponseReceived((String) message.object);
 			break;
 		case "welcome":
 			loginFrame.setVisible(false);

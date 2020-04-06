@@ -80,17 +80,8 @@ public class LoginFrame extends JFrame {
 			return;
 		client.sendMessage(new ServerMessage("sign" + (isLogin ? "in" : "up"), new SignInUpPacket(name, password)));
 	}
-
-	public void wrongCredentials() {
-		feedback.setText("Username or Password incorrect");
+	
+	public void signResponseReceived(String message) {
+		feedback.setText(message);
 	}
-
-	public void usernameTaken() {
-		feedback.setText("Username already taken");
-	}
-
-	public void alreadyConnected() {
-		feedback.setText("You're already signed in");
-	}
-
 }
