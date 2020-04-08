@@ -28,6 +28,7 @@ public class ChatSystem {
 
 		if (!(Arrays.stream(args).filter(x -> x.equals("onlyClient")).count() > 0)) {
 			new Server(7777);
+			new Server(7778);
 		}
 
 		new Client();
@@ -37,7 +38,7 @@ public class ChatSystem {
 		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 			Server.closeAll();
 			Client.closeAll();
-//			Warehouse.saveFiles();
+			//Warehouse.saveFiles();
 		}));
 	}
 

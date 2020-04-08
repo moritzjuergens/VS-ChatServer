@@ -3,6 +3,7 @@ package ChatSystem.Server;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -23,14 +24,21 @@ import ChatSystem.Packets.SendMessagePacket;
 import ChatSystem.Packets.SignInUpPacket;
 import ChatSystem.Packets.WelcomePacket;
 
+
+
 public class Server {
 
 	public static List<Server> registeredServer = new ArrayList<Server>();
 	private List<User> users = new ArrayList<User>();
 	private ServerSocket ss;
 	public Contact system = new Contact("System", ContactType.SYSTEM);
+	private int port;
+	private long lastHeartbeat = 0;
+	private long currentHeartbeat = System.currentTimeMillis();
 
 	public Server(int port) {
+
+		this.port = port;
 
 		new Thread(() -> {
 			try {
@@ -50,6 +58,7 @@ public class Server {
 			} finally {
 				CSLogger.log(Server.class, "Server listening on port %s", port);
 				Server.registeredServer.add(this);
+				new HeartbeatThread(this);
 			}
 		}).start();
 	}
@@ -98,9 +107,26 @@ public class Server {
 				u.out.writeObject(m);
 			} else {
 				// TODO: Anderen Servern nachricht schicken
+				for (Server s : Server.registeredServer) {
+					try {
+						if(s!=this) {
+							Socket serverClient = new Socket("localhost", s.getPort());
+							var outServer = new ObjectOutputStream(serverClient.getOutputStream());
+							outServer = new ObjectOutputStream(serverClient.getOutputStream());
+							outServer.writeObject(new ServerMessage("message", m));
+							serverClient.close();
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
 			}
 		} catch (IOException e) {
 		}
+	}
+
+	int getPort(){
+		return port;
 	}
 
 	public void sendMessage(User sender, User receiver, String message) {
@@ -112,6 +138,7 @@ public class Server {
 
 	public void messageReceived(ServerMessage message, ObjectOutputStream out) {
 		CSLogger.log(Server.class, "Message received: %s", message);
+
 
 		switch (message.prefix.toLowerCase()) {
 		case "signin":
@@ -203,6 +230,12 @@ public class Server {
 				sendMessage(Warehouse.getUser(sm.sender), new ServerMessage("message", m));
 			}
 			break;
+		case "heartbeat":
+			CSLogger.log(Server.class, "Message received: %s", message);
+			if (currentHeartbeat-lastHeartbeat>5000){
+				CSLogger.log(Server.class, "Oh he dead ", message);
+			}
+			lastHeartbeat=currentHeartbeat;
 		}
 	}
 }
