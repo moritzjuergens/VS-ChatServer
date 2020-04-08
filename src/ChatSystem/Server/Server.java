@@ -24,21 +24,30 @@ import ChatSystem.Packets.SendMessagePacket;
 import ChatSystem.Packets.SignInUpPacket;
 import ChatSystem.Packets.WelcomePacket;
 
-
-
 public class Server {
 
 	public static List<Server> registeredServer = new ArrayList<Server>();
 	private List<User> users = new ArrayList<User>();
 	private ServerSocket ss;
 	public Contact system = new Contact("System", ContactType.SYSTEM);
-	private int port;
+	public int port;
 	private long lastHeartbeat = 0;
 	private long currentHeartbeat = System.currentTimeMillis();
+	private Warehouse warehouse;
 
 	public Server(int port) {
 
 		this.port = port;
+		this.warehouse = new Warehouse(this);
+		this.warehouse.loadFiles();
+
+//		Nur Testzwecke, am Ende entfernen
+		User ti = new User("Timo", "Pass");
+		User eg = new User("Eger", "Pass");
+		warehouse.addUser(ti);
+		warehouse.addUser(eg);
+		warehouse.addMessage(new Message(ti.getContact(), eg.getContact(), "Hallo Welt"));
+		warehouse.addMessage(new Message(eg.getContact(), ti.getContact(), "Na süßer"));
 
 		new Thread(() -> {
 			try {
@@ -85,7 +94,7 @@ public class Server {
 		}
 		u.out = out;
 		users.add(u);
-		this.sendMessage(out, new ServerMessage("welcome", new WelcomePacket(u, Warehouse.getUserData(u))));
+		this.sendMessage(out, new ServerMessage("welcome", new WelcomePacket(u, warehouse.getUserData(u))));
 	}
 
 	public void unregisterClient(User u) {
@@ -109,7 +118,7 @@ public class Server {
 				// TODO: Anderen Servern nachricht schicken
 				for (Server s : Server.registeredServer) {
 					try {
-						if(s!=this) {
+						if (s != this) {
 							Socket serverClient = new Socket("localhost", s.getPort());
 							var outServer = new ObjectOutputStream(serverClient.getOutputStream());
 							outServer = new ObjectOutputStream(serverClient.getOutputStream());
@@ -125,7 +134,7 @@ public class Server {
 		}
 	}
 
-	int getPort(){
+	int getPort() {
 		return port;
 	}
 
@@ -139,16 +148,15 @@ public class Server {
 	public void messageReceived(ServerMessage message, ObjectOutputStream out) {
 		CSLogger.log(Server.class, "Message received: %s", message);
 
-
 		switch (message.prefix.toLowerCase()) {
 		case "signin":
 			synchronized (users) {
 				SignInUpPacket data = (SignInUpPacket) message.object;
-				if (!Warehouse.doesUserExist(data.name)) {
+				if (!warehouse.doesUserExist(data.name)) {
 					sendMessage(out, new ServerMessage("signresponse", "Username or Password incorrect"));
 					break;
 				}
-				User u = Warehouse.getUser(data.name);
+				User u = warehouse.getUser(data.name);
 				if (!(u.name.equals(data.name) && u.password.equals(data.password))) {
 					sendMessage(out, new ServerMessage("signresponse", "Username or Password incorrect"));
 					break;
@@ -162,35 +170,37 @@ public class Server {
 		case "signup":
 			synchronized (users) {
 				SignInUpPacket data = (SignInUpPacket) message.object;
-				if (Warehouse.doesUserExist(data.name)) {
+				if (warehouse.doesUserExist(data.name)) {
 					sendMessage(out, new ServerMessage("signresponse", "Username already taken"));
 					break;
 				}
 				User u = new User(data.name, data.password);
+				warehouse.addUser(u);
 				synchronized (users) {
 					this.registerClient(u, out);
 				}
 			}
 			break;
-		case "logoff": 
-			if(message.object == null) break;
+		case "logoff":
+			if (message.object == null)
+				break;
 			synchronized (users) {
 				users = users.stream().filter(x -> !x.equals((User) message.object)).collect(Collectors.toList());
 			}
 			break;
 		case "allcontacts":
-			sendMessage(out, new ServerMessage("allcontacts", new AllContactsPacket(Warehouse.getAllUser())));
+			sendMessage(out, new ServerMessage("allcontacts", new AllContactsPacket(warehouse.getAllUser())));
 			break;
 		case "addto":
 			AddToPacket atp = (AddToPacket) message.object;
 			Contact invitee = atp.invitee;
 			if (atp.contact.type.equals(ContactType.GROUP)) {
-				Group g = Warehouse.getGroupById(atp.contact.name);
-				if (Warehouse.addUserToGroup(invitee, g)) {
+				Group g = warehouse.getGroupById(atp.contact.name);
+				if (warehouse.addUserToGroup(invitee, g)) {
 					Message m = new Message(system, atp.contact, invitee.name + " has joined the group!");
 					ServerMessage sm = new ServerMessage("message", m);
 					for (Contact c : g.members) {
-						sendMessage(Warehouse.getUser(c), sm);
+						sendMessage(warehouse.getUser(c), sm);
 					}
 				}
 
@@ -199,43 +209,44 @@ public class Server {
 				ServerMessage sm = new ServerMessage("message", m);
 				sendMessage(out, sm);
 				sendMessage(out, new ServerMessage("openchat", invitee));
-				sendMessage(Warehouse.getUser(invitee), sm);
+				sendMessage(warehouse.getUser(invitee), sm);
 			}
 			break;
 		case "creategroup":
 			CreateGroupPacket cgp = (CreateGroupPacket) message.object;
 			Group g = new Group(cgp.user, cgp.chat, cgp.selected);
+			warehouse.addGroup(g);
 
 			Message mc = new Message(system, g.getContact(), cgp.user.name + " created this group");
 			ServerMessage smc = new ServerMessage("message", mc);
 			for (Contact c : g.members) {
 				Message m = new Message(system, g.getContact(), c.name + " has joined the group!");
 				ServerMessage sm = new ServerMessage("message", m);
-				sendMessage(Warehouse.getUser(c), smc);
-				for(Contact c_ : g.members) {
-					sendMessage(Warehouse.getUser(c_), sm);					
+				sendMessage(warehouse.getUser(c), smc);
+				for (Contact c_ : g.members) {
+					sendMessage(warehouse.getUser(c_), sm);
 				}
 			}
-			sendMessage(out, new ServerMessage("openchat", g.getContact()));			
+			sendMessage(out, new ServerMessage("openchat", g.getContact()));
 			break;
 		case "message":
 			SendMessagePacket sm = (SendMessagePacket) message.object;
 			Message m = new Message(sm.sender, sm.receiver, sm.message);
+			warehouse.addMessage(m);
 			if (sm.receiver.type.equals(ContactType.GROUP)) {
-				for (Contact c : Warehouse.getGroupsById(sm.receiver.name).get(0).members) {
-					sendMessage(Warehouse.getUser(c), new ServerMessage("message", m));
+				for (Contact c : warehouse.getGroupsById(sm.receiver.name).get(0).members) {
+					sendMessage(warehouse.getUser(c), new ServerMessage("message", m));
 				}
 			} else {
-				sendMessage(Warehouse.getUser(sm.receiver), new ServerMessage("message", m));
-				sendMessage(Warehouse.getUser(sm.sender), new ServerMessage("message", m));
+				sendMessage(warehouse.getUser(sm.receiver), new ServerMessage("message", m));
+				sendMessage(warehouse.getUser(sm.sender), new ServerMessage("message", m));
 			}
 			break;
 		case "heartbeat":
-			CSLogger.log(Server.class, "Message received: %s", message);
-			if (currentHeartbeat-lastHeartbeat>5000){
+			if (currentHeartbeat - lastHeartbeat > 5000) {
 				CSLogger.log(Server.class, "Oh he dead ", message);
 			}
-			lastHeartbeat=currentHeartbeat;
+			lastHeartbeat = currentHeartbeat;
 		}
 	}
 }

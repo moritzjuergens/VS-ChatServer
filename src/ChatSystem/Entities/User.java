@@ -5,7 +5,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
-import ChatSystem.DWH.Warehouse;
 import ChatSystem.Entities.Contact.ContactType;
 
 @SuppressWarnings("serial")
@@ -24,7 +23,6 @@ public class User implements Serializable {
 		this.name = name;
 		this.password = password;
 		this.id = id;
-		Warehouse.addUser(this);
 	}
 	
 	public Contact getContact() {

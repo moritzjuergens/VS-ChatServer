@@ -5,8 +5,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
-import ChatSystem.DWH.Warehouse;
-
 @SuppressWarnings("serial")
 public class Message implements Comparable<Message>, Serializable {
 
@@ -24,7 +22,6 @@ public class Message implements Comparable<Message>, Serializable {
 		this.receiver = receiver;
 		this.message = message;
 		this.timestamp = timestamp;
-		Warehouse.addMessage(this);
 	}
 
 	public boolean equals(Message m) {

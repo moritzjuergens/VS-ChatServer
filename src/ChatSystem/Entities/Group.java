@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ChatSystem.RandomGroupNameGenerator;
-import ChatSystem.DWH.Warehouse;
 import ChatSystem.Entities.Contact.ContactType;
 
 @SuppressWarnings("serial")
@@ -27,7 +26,6 @@ public class Group implements Serializable {
 		}
 		this.id = System.currentTimeMillis();
 		setName(RandomGroupNameGenerator.generate());
-		Warehouse.addGroup(this);
 	}
 
 	public void setName(String name) {
