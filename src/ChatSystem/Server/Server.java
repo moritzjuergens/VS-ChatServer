@@ -27,6 +27,7 @@ import ChatSystem.Packets.WelcomePacket;
 public class Server {
 
 	public static List<Server> registeredServer = new ArrayList<Server>();
+	public static List<Integer> registeredPorts = new ArrayList<Integer>();
 	private List<User> users = new ArrayList<User>();
 	private ServerSocket ss;
 	public Contact system = new Contact("System", ContactType.SYSTEM);
@@ -47,7 +48,7 @@ public class Server {
 		warehouse.addUser(ti);
 		warehouse.addUser(eg);
 		warehouse.addMessage(new Message(ti.getContact(), eg.getContact(), "Hallo Welt"));
-		warehouse.addMessage(new Message(eg.getContact(), ti.getContact(), "Na süßer"));
+		warehouse.addMessage(new Message(eg.getContact(), ti.getContact(), "Na sï¿½ï¿½er"));
 
 		new Thread(() -> {
 			try {
@@ -247,6 +248,11 @@ public class Server {
 				CSLogger.log(Server.class, "Oh he dead ", message);
 			}
 			lastHeartbeat = currentHeartbeat;
+			break;
+		case "serverlogin":
+			var newServer = (int)message.object;
+			registeredPorts.add(newServer);
+			System.out.println("Okay" + port);
 		}
 	}
 }

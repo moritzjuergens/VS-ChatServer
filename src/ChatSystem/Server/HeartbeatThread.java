@@ -11,6 +11,9 @@ public class HeartbeatThread implements Runnable {
 	Socket serverClient;
 	ObjectOutputStream out;
 	Server server;
+	int[] portRange = {
+		7777,7778,7779,7780
+	};
 
 	HeartbeatThread(Server server) {
 		this.server = server;
@@ -20,16 +23,17 @@ public class HeartbeatThread implements Runnable {
 	@Override
 	public void run() {
 		// Start HeartbeatHandler
+		registerServer(portRange);
 		while (true) {
 			try {
 				TimeUnit.SECONDS.sleep(5);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			for (Server s : Server.registeredServer) {
+			for (int s : Server.registeredPorts) {
 				try {
-					if (s != server) {
-						serverClient = new Socket("localhost", s.getPort());
+					if (s != server.getPort()) {
+						serverClient = new Socket("localhost", s);
 						out = new ObjectOutputStream(serverClient.getOutputStream());
 						out.writeObject(
 								new ServerMessage("heartbeat", server.getPort() + "; " + System.currentTimeMillis()));
@@ -41,4 +45,21 @@ public class HeartbeatThread implements Runnable {
 			}
 		}
 	}
+
+	void registerServer(int[] portRange){
+		for(int p : portRange){
+			if(p!=server.getPort()){
+				try {
+					serverClient = new Socket("localhost", p);
+					out = new ObjectOutputStream(serverClient.getOutputStream());
+					out.writeObject(
+							new ServerMessage("serverlogin", server.getPort()));
+					serverClient.close();
+				}catch (IOException e){
+					System.err.println(e);
+				}
+			}
+		}
+	}
+
 }

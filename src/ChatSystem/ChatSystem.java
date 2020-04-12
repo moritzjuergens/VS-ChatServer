@@ -14,6 +14,7 @@ public class ChatSystem {
 		if (!(Arrays.stream(args).filter(x -> x.equals("onlyClient")).count() > 0)) {
 			new Server(7777);
 			new Server(7778);
+			new Server(7779);
 		}
 
 		new Client();
