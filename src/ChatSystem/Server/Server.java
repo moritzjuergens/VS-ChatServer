@@ -27,11 +27,14 @@ import ChatSystem.Packets.WelcomePacket;
 public class Server {
 
 	public static List<Server> registeredServer = new ArrayList<Server>();
-	public static List<Integer> registeredPorts = new ArrayList<Integer>();
+	public List<Integer> registeredPorts = new ArrayList<Integer>();
 	private List<User> users = new ArrayList<User>();
 	private ServerSocket ss;
 	public Contact system = new Contact("System", ContactType.SYSTEM);
 	public int port;
+	int[] portRange = {
+			7777,7778,7779,7780
+	};
 	private long lastHeartbeat = 0;
 	private long currentHeartbeat = System.currentTimeMillis();
 	private Warehouse warehouse;
@@ -68,7 +71,8 @@ public class Server {
 			} finally {
 				CSLogger.log(Server.class, "Server listening on port %s", port);
 				Server.registeredServer.add(this);
-				new HeartbeatThread(this);
+				registerServer(portRange);
+				new HeartbeatThread(this, registeredPorts);
 			}
 		}).start();
 	}
@@ -144,6 +148,22 @@ public class Server {
 		Message m = new Message(sender.getContact(), receiver.getContact(), message);
 		ServerMessage sm = new ServerMessage("message", m);
 		sendMessage(receiver, sm);
+	}
+
+	void registerServer(int[] portRange){
+		for(int p : portRange){
+			if(p!=getPort()){
+				try {
+					var serverClient = new Socket("localhost", p);
+					var out = new ObjectOutputStream(serverClient.getOutputStream());
+					out.writeObject(
+							new ServerMessage("serverlogin", getPort()));
+					serverClient.close();
+				}catch (IOException e){
+					System.err.println(e);
+				}
+			}
+		}
 	}
 
 	public void messageReceived(ServerMessage message, ObjectOutputStream out) {
