@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import ChatSystem.CSLogger;
 import ChatSystem.Entities.Contact;
@@ -24,7 +25,9 @@ public class Client extends Thread {
 	Socket s;
 	ObjectInputStream in;
 	ObjectOutputStream out;
-
+	int[] portRange= {
+		7777,7778,7779,7780
+	};
 	LoginFrame loginFrame;
 
 	public Client() {
@@ -74,7 +77,14 @@ public class Client extends Thread {
 
 	// TODO: Lastverteilung
 	public int getPort() {
-		return 7777;
+		return getRandomElement(portRange);
+	}
+
+	public int getRandomElement(int[] arr)
+	{
+		Random r=new Random();
+		int randomNumber=r.nextInt(arr.length);
+		return arr[randomNumber];
 	}
 
 	public void sendMessage(ServerMessage message) {

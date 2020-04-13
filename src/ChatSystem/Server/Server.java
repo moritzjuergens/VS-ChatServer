@@ -121,10 +121,10 @@ public class Server {
 				u.out.writeObject(m);
 			} else {
 				// TODO: Anderen Servern nachricht schicken
-				for (Server s : Server.registeredServer) {
+				for (int port : registeredPorts) {
 					try {
-						if (s != this) {
-							Socket serverClient = new Socket("localhost", s.getPort());
+						if (port != getPort()) {
+							Socket serverClient = new Socket("localhost", port);
 							var outServer = new ObjectOutputStream(serverClient.getOutputStream());
 							outServer = new ObjectOutputStream(serverClient.getOutputStream());
 							outServer.writeObject(new ServerMessage("message", m));

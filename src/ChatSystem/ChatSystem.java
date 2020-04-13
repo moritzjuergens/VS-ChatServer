@@ -15,6 +15,7 @@ public class ChatSystem {
 			new Server(7777);
 			new Server(7778);
 			new Server(7779);
+			new Server(7780);
 		}
 
 		new Client();
