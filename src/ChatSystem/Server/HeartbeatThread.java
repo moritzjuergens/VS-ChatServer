@@ -38,7 +38,8 @@ public class HeartbeatThread implements Runnable {
 						serverClient = new Socket("localhost", s);
 						out = new ObjectOutputStream(serverClient.getOutputStream());
 						out.writeObject(
-								new ServerMessage("heartbeat", server.getPort() + "; " + System.currentTimeMillis()));
+								new ServerMessage("heartbeat", server.getPort()));
+//						+"-->"+ s + "; " + System.currentTimeMillis())
 						serverClient.close();
 					}
 				} catch (IOException e) {

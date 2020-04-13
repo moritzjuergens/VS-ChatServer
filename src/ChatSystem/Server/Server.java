@@ -167,7 +167,7 @@ public class Server {
 	}
 
 	public void messageReceived(ServerMessage message, ObjectOutputStream out) {
-		CSLogger.log(Server.class, "Message received: %s", message);
+		CSLogger.log(Server.class, getPort()+ ": Message received: %s", message);
 
 		switch (message.prefix.toLowerCase()) {
 		case "signin":
@@ -264,15 +264,15 @@ public class Server {
 			}
 			break;
 		case "heartbeat":
-			if (currentHeartbeat - lastHeartbeat > 5000) {
-				CSLogger.log(Server.class, "Oh he dead ", message);
+			if (currentHeartbeat - lastHeartbeat > 10000) {
+				CSLogger.log(Server.class,  getPort()+": Server " + message.object + " has been lost");
 			}
 			lastHeartbeat = currentHeartbeat;
 			break;
 		case "serverlogin":
 			var newServer = (int)message.object;
 			registeredPorts.add(newServer);
-			System.out.println("Okay" + port);
+			CSLogger.log(Server.class, getPort()+": Server " + newServer + " registered by Server " + getPort());
 		}
 	}
 }
