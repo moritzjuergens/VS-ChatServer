@@ -23,17 +23,21 @@ public class ServerThread implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	@Override
 	public void run() {
-		while (true) {
-			try {
-				ServerMessage m = (ServerMessage) in.readObject();
+
+		ServerMessage m;
+		try {
+			while ((m = (ServerMessage) in.readObject()) != null) {
 				server.messageReceived(m, out);
-			} catch (ClassNotFoundException | IOException e) {
 			}
+		} catch (ClassNotFoundException e) {
+			// e.printStackTrace();
+		} catch (IOException e) {
+			// e.printStackTrace();
 		}
 	}
+
 }

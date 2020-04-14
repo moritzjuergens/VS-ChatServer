@@ -6,7 +6,6 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 import ChatSystem.CSLogger;
 import ChatSystem.Entities.Contact;
@@ -16,27 +15,23 @@ import ChatSystem.Frontend.ChatManager;
 import ChatSystem.Frontend.Frames.LoginFrame;
 import ChatSystem.Packets.AllContactsPacket;
 import ChatSystem.Packets.WelcomePacket;
+import ChatSystem.Server.Server;
 
 public class Client extends Thread {
 
 	public static List<Client> registeredClients = new ArrayList<Client>();
 	public ChatManager chat;
+	public int port;
 
 	Socket s;
 	ObjectInputStream in;
 	ObjectOutputStream out;
-	int[] portRange= {
-		7777,7778,7779,7780
-	};
 	LoginFrame loginFrame;
 
-	public Client() {
-
-		this.loginFrame = new LoginFrame(this);
+	public Client(int port) {
+		this.port = port;
 
 		new Thread(() -> {
-
-			int port = getPort();
 			try {
 				s = new Socket("localhost", port);
 				out = new ObjectOutputStream(s.getOutputStream());
@@ -60,6 +55,12 @@ public class Client extends Thread {
 				Client.registeredClients.add(this);
 			}
 		}).start();
+		this.loginFrame = new LoginFrame(this);
+
+	}
+
+	public Client() {
+		this(getRandomPort());
 	}
 
 	public static void closeAll() {
@@ -75,16 +76,8 @@ public class Client extends Thread {
 		}
 	}
 
-	// TODO: Lastverteilung
-	public int getPort() {
-		return getRandomElement(portRange);
-	}
-
-	public int getRandomElement(int[] arr)
-	{
-		Random r=new Random();
-		int randomNumber=r.nextInt(arr.length);
-		return arr[randomNumber];
+	public static int getRandomPort() {
+		return Server.portRange[(int) Math.floor(Math.random() * Server.portRange.length)];
 	}
 
 	public void sendMessage(ServerMessage message) {

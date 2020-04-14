@@ -16,8 +16,13 @@ public class ChatFrameListener implements WindowListener {
 	@Override
 	public void windowClosing(WindowEvent e) {
 		this.manager.client.sendMessage(new ServerMessage("logoff", this.manager.user));
-		this.manager.contactPopUp.setVisible(false);
-		this.manager.emojiPopUp.setVisible(false);
+		try {			
+			this.manager.contactPopUp.setVisible(false);
+			this.manager.emojiPopUp.setVisible(false);
+		}
+		catch(Exception ex) {
+			// Only called if window hasnt been initalized on slow mashines
+		}
 	}
 
 	@Override

@@ -5,10 +5,9 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import ChatSystem.CSLogger;
@@ -29,17 +28,17 @@ import ChatSystem.Packets.WelcomePacket;
 public class Server {
 
 	public static List<Server> registeredServer = new ArrayList<Server>();
-	public List<Integer> registeredPorts = new ArrayList<Integer>();
+	public static Integer[] portRange = new Integer[] { 7777, 7778, 7779, 7780 };
+
 	private List<User> users = new ArrayList<User>();
+	public List<String> registeredPorts = new ArrayList<>();
 	private ServerSocket ss;
 	public Contact system = new Contact("System", ContactType.SYSTEM);
 	public int port;
-	int[] portRange = {
-			7777,7778,7779,7780
-	};
-	private long lastHeartbeat = 100000000;
-	private long currentHeartbeat;
+	public long lastHeartbeat = 0;
 	private Warehouse warehouse;
+	
+	private boolean firstBroadcast = true;
 
 	public Server(int port) {
 
@@ -47,18 +46,10 @@ public class Server {
 		this.warehouse = new Warehouse(this);
 		this.warehouse.loadFiles();
 
-//		Nur Testzwecke, am Ende entfernen
-		User ti = new User("Timo", "Pass");
-		User eg = new User("Eger", "Pass");
-		warehouse.addUser(ti);
-		warehouse.addUser(eg);
-		warehouse.addMessage(new Message(ti.getContact(), eg.getContact(), "Hallo Welt"));
-		warehouse.addMessage(new Message(eg.getContact(), ti.getContact(), "Na s��er"));
-
 		new Thread(() -> {
 			try {
 				ss = new ServerSocket(port);
-				var pool = Executors.newFixedThreadPool(10);
+				var pool = Executors.newCachedThreadPool();
 				new Thread(() -> {
 					while (true) {
 						try {
@@ -68,15 +59,18 @@ public class Server {
 						}
 					}
 				}).start();
+				broadcast(new ServerMessage("heartbeat", getPort()), Arrays.asList(portRange));
 
 			} catch (IOException e) {
 			} finally {
 				CSLogger.log(Server.class, "Server listening on port %s", port);
 				Server.registeredServer.add(this);
-				registerServer(portRange);
-				new HeartbeatThread(this, registeredPorts);
 			}
 		}).start();
+	}
+
+	protected int getPort() {
+		return port;
 	}
 
 	public static void closeAll() {
@@ -111,69 +105,66 @@ public class Server {
 	public void sendMessage(ObjectOutputStream out, ServerMessage m) {
 		try {
 			out.writeObject(m);
+			out.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	public void sendMessage(User u, ServerMessage m, SendMessagePacket smp) {
-		CSLogger.log(Server.class, "Sending %s to %s", m, u.getContact());
-		try {
-			if (users.contains(u)) {
-				u.out.writeObject(m);
-			} else {
-				// TODO: Anderen Servern nachricht schicken
-				for (int port : registeredPorts) {
-					try {
-						if (port != getPort()) {
-							Socket serverClient = new Socket("localhost", port);
-							var outServer = new ObjectOutputStream(serverClient.getOutputStream());
-							outServer = new ObjectOutputStream(serverClient.getOutputStream());
-							outServer.writeObject(new ServerMessage("message", smp));
-							serverClient.close();
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			}
-		} catch (IOException e) {
+	public void sendMessage(Contact c, ServerMessage m) {
+		CSLogger.log(Server.class, "[%s\t] Sending %s to %s", getPort(), m, c);
+		User u = warehouse.getUser(c);
+		if (users.contains(u)) {
+			sendMessage(u.out, m);
 		}
 	}
 
-	int getPort() {
-		return port;
-	}
-
-	public void sendMessage2(User sender, User receiver, String message) {
-		CSLogger.log(Server.class, "Sending %s from %s to %s", message, sender.getContact(), receiver.getContact());
-		Message m = new Message(sender.getContact(), receiver.getContact(), message);
-		ServerMessage sm = new ServerMessage("message", m);
-		sendMessage(receiver, sm, null);
-	}
-
-	void registerServer(int[] portRange){
-		for(int p : portRange){
-			if(p!=getPort()){
+	public void broadcast(ServerMessage sm, List<Integer> ports) {
+		new Thread(() -> {
+			for (int port : ports) {
 				try {
-					var serverClient = new Socket("localhost", p);
-					var out = new ObjectOutputStream(serverClient.getOutputStream());
-					if(!registeredPorts.contains(p)){
-						registeredPorts.add(p);
+					if (port != getPort()) {
+						CSLogger.log(Server.class, "[%s\t] Broadcasting %s to %s", getPort(), sm, port);
+						Socket serverClient = new Socket("localhost", port);
+						ObjectOutputStream outServer = new ObjectOutputStream(serverClient.getOutputStream());
+						outServer.writeObject(sm);
+						
+						if(firstBroadcast) {
+							firstBroadcast = false;
+							for(String s : new String[] {"messages", "groups", "users"}) {
+								ServerMessage fm = new ServerMessage("fetch" + s, lastHeartbeat);
+								outServer.writeObject(fm);
+							}
+						}
+						
+						outServer.flush();
+						serverClient.close();
+						if (!registeredPorts.contains("" + port)) {
+							registeredPorts.add("" + port);
+						}
+
 					}
-					out.writeObject(
-							new ServerMessage("serverlogin", getPort()));
-					serverClient.close();
-				}catch (IOException e){
-					CSLogger.log(Server.class, "%s: Couldn't reach %s",getPort(),p);
+				} catch (IOException e) {
+					CSLogger.log(Server.class, "[%s\t] Cant connect to Server: %s, removeing from list", getPort(),
+							port);
+					registeredPorts.remove("" + port);
 				}
 			}
+		}).start();
+	}
+
+	public void broadcast(ServerMessage sm) {
+		synchronized (registeredPorts) {
+			broadcast(sm, registeredPorts.stream().map(x -> Integer.parseInt(x)).collect(Collectors.toList()));
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public void messageReceived(ServerMessage message, ObjectOutputStream out) {
-		CSLogger.log(Server.class, getPort()+ ": Message received: %s", message);
-
+		CSLogger.log(Server.class, "[%s\t] Message received: %s", getPort(), message);
+		
+		if(message.equals(null)) return;
+		
 		switch (message.prefix.toLowerCase()) {
 		case "signin":
 			synchronized (users) {
@@ -200,12 +191,18 @@ public class Server {
 					sendMessage(out, new ServerMessage("signresponse", "Username already taken"));
 					break;
 				}
+
 				User u = new User(data.name, data.password);
+				broadcast(new ServerMessage("user", u));
 				warehouse.addUser(u);
+
 				synchronized (users) {
 					this.registerClient(u, out);
 				}
 			}
+			break;
+		case "user":
+			warehouse.addUser((User) message.object);
 			break;
 		case "logoff":
 			if (message.object == null)
@@ -219,6 +216,14 @@ public class Server {
 			break;
 		case "addto":
 			AddToPacket atp = (AddToPacket) message.object;
+
+			if (atp.forward) {
+				broadcast(new ServerMessage("addto", atp.forward(false)));
+			}
+			else {
+				warehouse.updateHeartBeat(System.currentTimeMillis());
+			}
+
 			Contact invitee = atp.invitee;
 			if (atp.contact.type.equals(ContactType.GROUP)) {
 				Group g = warehouse.getGroupById(atp.contact.name);
@@ -226,7 +231,7 @@ public class Server {
 					Message m = new Message(system, atp.contact, invitee.name + " has joined the group!");
 					ServerMessage sm = new ServerMessage("message", m);
 					for (Contact c : g.members) {
-						sendMessage(warehouse.getUser(c), sm, );
+						sendMessage(c, sm);
 					}
 				}
 
@@ -235,57 +240,91 @@ public class Server {
 				ServerMessage sm = new ServerMessage("message", m);
 				sendMessage(out, sm);
 				sendMessage(out, new ServerMessage("openchat", invitee));
-				sendMessage(warehouse.getUser(invitee), sm);
+				sendMessage(invitee, sm);
 			}
+			break;
+		case "group":
+			warehouse.updateHeartBeat(System.currentTimeMillis());
+			warehouse.addGroup((Group) message.object);
 			break;
 		case "creategroup":
 			CreateGroupPacket cgp = (CreateGroupPacket) message.object;
 			Group g = new Group(cgp.user, cgp.chat, cgp.selected);
+			broadcast(new ServerMessage("group", g));
+
 			warehouse.addGroup(g);
 
 			Message mc = new Message(system, g.getContact(), cgp.user.name + " created this group");
+			broadcast(new ServerMessage("message", new SendMessagePacket(mc.sender, mc.receiver, mc.message, false)));
+
 			ServerMessage smc = new ServerMessage("message", mc);
 			for (Contact c : g.members) {
+
 				Message m = new Message(system, g.getContact(), c.name + " has joined the group!");
+				broadcast(new ServerMessage("message", new SendMessagePacket(m.sender, m.receiver, m.message, false)));
+
 				ServerMessage sm = new ServerMessage("message", m);
-				sendMessage(warehouse.getUser(c), smc);
+				sendMessage(c, smc);
 				for (Contact c_ : g.members) {
-					sendMessage(warehouse.getUser(c_), sm);
+					sendMessage(c_, sm);
 				}
 			}
 			sendMessage(out, new ServerMessage("openchat", g.getContact()));
 			break;
 		case "message":
 			SendMessagePacket sm = (SendMessagePacket) message.object;
+			if (sm.forward) {
+				this.broadcast(new ServerMessage("message", sm.forward(false)));
+			}
+			else {
+				warehouse.updateHeartBeat(System.currentTimeMillis());
+			}
+
 			Message m = new Message(sm.sender, sm.receiver, sm.message);
 			warehouse.addMessage(m);
-			if(sm.forward)
-			{
-//				sm.forward = false;
-				if (sm.receiver.type.equals(ContactType.GROUP)) {
+			if (sm.receiver.type.equals(ContactType.GROUP)) {
 				for (Contact c : warehouse.getGroupsById(sm.receiver.name).get(0).members) {
-					sendMessage(warehouse.getUser(c), new ServerMessage("message", m), sm.forward(false));
+					sendMessage(c, new ServerMessage("message", m));
 				}
 			} else {
-				sendMessage(warehouse.getUser(sm.receiver), new ServerMessage("message", m), sm.forward(false));
-				sendMessage(warehouse.getUser(sm.sender), new ServerMessage("message", m), sm.forward(false));
-			}
+				sendMessage(sm.receiver, new ServerMessage("message", m));
+				sendMessage(sm.sender, new ServerMessage("message", m));
 			}
 			break;
 		case "heartbeat":
-			currentHeartbeat = System.currentTimeMillis();
-			if (currentHeartbeat - lastHeartbeat > 10000) {
-				CSLogger.log(Server.class,  getPort()+": Server " + message.object + " has been lost");
-//				registeredPorts.remove(message.object);
+			synchronized (registeredPorts) {
+				String port = "" + ((int) message.object);
+				if (!registeredPorts.contains(port)) {
+					registeredPorts.add(port);
+				}
 			}
-			lastHeartbeat = currentHeartbeat;
 			break;
-		case "serverlogin":
-			var newServer = (int)message.object;
-			if(!registeredPorts.contains(newServer)){
-				registeredPorts.add(newServer);
+		case "fetchmessages":
+			sendMessage(out, new ServerMessage("messages", warehouse.getMessagesAfter((long) message.object)));
+			break;
+		case "messages":
+			for(Message messages : (List<Message>) message.object) {
+				warehouse.addMessage(messages);
 			}
-			CSLogger.log(Server.class, getPort()+": Server " + newServer + " registered by Server " + getPort());
+			break;
+
+		case "fetchgroups":
+			sendMessage(out, new ServerMessage("groups", warehouse.getGroupsAfter((long) message.object)));
+			break;
+		case "groups":
+			for(Group groups : (List<Group>) message.object) {
+				warehouse.addGroup(groups);
+			}
+			break;
+
+		case "fetchusers":
+			sendMessage(out, new ServerMessage("users", warehouse.getUsersAfter((long) message.object)));
+			break;
+		case "users":
+			for(User users : (List<User>) message.object) {
+				warehouse.addUser(users);
+			}
+			break;
 		}
 	}
 }

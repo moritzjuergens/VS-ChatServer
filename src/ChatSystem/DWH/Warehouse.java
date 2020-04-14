@@ -25,34 +25,36 @@ public class Warehouse {
 	private List<Message> messages = new ArrayList<Message>();
 	private List<User> users = new ArrayList<User>();
 	private List<Group> groups = new ArrayList<Group>();
-	private String[] files = new String[] { "messages", "users", "groups" };
+
+	private String[] files = new String[] { "messages", "users", "groups", "heartbeat" };
 	private Server server;
 
 	public Warehouse(Server s) {
 		this.server = s;
 	}
 
-	public void saveFiles() {
-		for (String fileName : files) {
-			String name = "./" + fileName + "_" + server.port + ".dat";
-			try {
-				ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(name));
-				CSLogger.log(Warehouse.class, "Saving %s in %s", fileName, name);
-				if (fileName.equals("messages")) {
-					out.writeObject(getMessages());
-				} else if (fileName.equals("groups")) {
-					out.writeObject(getGroups());
+	public void saveFile(String fileName) {
+		String name = "./" + fileName + "_" + server.port + ".dat";
+		try {
+			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(name));
+			CSLogger.log(Warehouse.class, "Saving %s in %s", fileName, name);
+			if (fileName.equals("messages")) {
+				out.writeObject(getMessages());
+			} else if (fileName.equals("groups")) {
+				out.writeObject(getGroups());
 
-				} else if (fileName.equals("users")) {
-					out.writeObject(getUsers());
-				}
-				out.close();
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
+			} else if (fileName.equals("users")) {
+				out.writeObject(getUsers());
+			} else if (fileName.equals("heartbeat")) {
+				out.writeLong(server.lastHeartbeat);
 			}
+			out.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
+
 	}
 
 	@SuppressWarnings({ "unchecked", "resource" })
@@ -60,7 +62,6 @@ public class Warehouse {
 		synchronized (messages) {
 			synchronized (groups) {
 				synchronized (users) {
-
 					for (String fileName : files) {
 						String name = "./" + fileName + "_" + server.port + ".dat";
 						File f = new File(name);
@@ -75,6 +76,8 @@ public class Warehouse {
 								groups = (List<Group>) in.readObject();
 							} else if (fileName.equals("users")) {
 								users = (List<User>) in.readObject();
+							} else if (fileName.equals("heartbeat")) {
+								server.lastHeartbeat = in.readLong();
 							}
 						} catch (FileNotFoundException e) {
 							e.printStackTrace();
@@ -89,11 +92,18 @@ public class Warehouse {
 		}
 	}
 
+	public void updateHeartBeat(long time) {
+		this.server.lastHeartbeat = time;
+		saveFile("heartbeat");
+	}
+
 	public void addMessage(Message m) {
-		CSLogger.log(Warehouse.class, "Adding Message to Warehouse %s", m);
-		synchronized (messages) {
-			messages.add(m);
-			saveFiles();
+		if (!doesMessageExist(m)) {
+			CSLogger.log(Warehouse.class, "Adding Message to Warehouse %s", m);
+			synchronized (messages) {
+				messages.add(m);
+				saveFile("messages");
+			}
 		}
 	}
 
@@ -106,16 +116,27 @@ public class Warehouse {
 		CSLogger.log(Warehouse.class, "User created and stored in DB", "");
 		synchronized (users) {
 			users.add(u);
-			saveFiles();
+			saveFile("users");
 		}
 	}
 
 	public void addGroup(Group g) {
 
-		CSLogger.log(Warehouse.class, "Adding Group to Warehouse %s", g);
 		synchronized (groups) {
-			groups.add(g);
-			saveFiles();
+			if (doesGroupExsits(g)) {
+				CSLogger.log(Warehouse.class, "Updating members of in group %s", g);
+				Group local = getGroupById("" + g.id);
+				for (Contact member : g.members) {
+					if (!local.members.contains(member)) {
+						local.members.add(member);
+					}
+					saveFile("groups");
+				}
+			} else {
+				CSLogger.log(Warehouse.class, "Adding Group to Warehouse %s", g);
+				groups.add(g);
+				saveFile("groups");
+			}
 		}
 	}
 
@@ -173,6 +194,7 @@ public class Warehouse {
 				return false;
 			}
 			g.members.add(c);
+			saveFile("groups");
 			return true;
 		}
 	}
@@ -222,6 +244,10 @@ public class Warehouse {
 		}
 		return getGroups().stream().filter(x -> x.members.stream().filter(y -> y.equals(c)).count() > 0)
 				.collect(Collectors.toList());
+	}
+
+	public boolean doesMessageExist(Message m) {
+		return getMessages().stream().filter(x -> x.equals(m)).count() > 0;
 	}
 
 	public boolean doesUserExist(String name) {

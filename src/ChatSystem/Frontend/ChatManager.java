@@ -136,12 +136,12 @@ public class ChatManager {
 				openChatWith(contacts.get(0));
 				return;
 			}
-			client.sendMessage(new ServerMessage("addto", new AddToPacket(user.getContact(), contact)));
+			client.sendMessage(new ServerMessage("addto", new AddToPacket(user.getContact(), contact, true)));
 			return;
 		}
 		if (!contact.equals(currentContact)) {
 			if (currentContact.type.equals(ContactType.GROUP)) {
-				client.sendMessage(new ServerMessage("addto", new AddToPacket(currentContact, contact)));
+				client.sendMessage(new ServerMessage("addto", new AddToPacket(currentContact, contact, true)));
 				return;
 			}
 			client.sendMessage(new ServerMessage("creategroup",

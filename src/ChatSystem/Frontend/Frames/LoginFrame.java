@@ -32,7 +32,7 @@ public class LoginFrame extends JFrame {
 
 		setSize(400, 260);
 		setResizable(false);
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setLocationRelativeTo(null);
 		setLayout(new BorderLayout());
 
@@ -70,7 +70,7 @@ public class LoginFrame extends JFrame {
 		background.add(title);
 		background.add(pw);
 		background.add(un);
-
+		pack();
 		setVisible(true);
 
 	}

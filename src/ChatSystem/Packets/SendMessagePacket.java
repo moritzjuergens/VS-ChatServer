@@ -21,12 +21,17 @@ public class SendMessagePacket implements Serializable {
 		this.message = message;
 		this.forward = forward;
 	}
+	
+	public SendMessagePacket forward(boolean forward) {
+		this.forward = forward;
+		return this;
+	}
 
 	private void writeObject(ObjectOutputStream out) throws IOException {
 		out.writeObject(this.sender);
 		out.writeObject(this.receiver);
 		out.writeObject(this.message);
-		out.writeObject(this.forward);
+		out.writeBoolean(this.forward);
 	}
 
 	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -35,10 +40,7 @@ public class SendMessagePacket implements Serializable {
 		this.message = (String) in.readObject();
 		this.forward = in.readBoolean();
 	}
-	public SendMessagePacket forward(boolean b){
-		this.forward = b;
-		return this;
-	}
+
 	public String toString() {
 		return this.sender + "\t" + this.receiver + "\t" + this.message;
 	}
