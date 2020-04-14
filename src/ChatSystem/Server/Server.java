@@ -5,8 +5,10 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import ChatSystem.CSLogger;
@@ -35,8 +37,8 @@ public class Server {
 	int[] portRange = {
 			7777,7778,7779,7780
 	};
-	private long lastHeartbeat = 0;
-	private long currentHeartbeat = System.currentTimeMillis();
+	private long lastHeartbeat = 100000000;
+	private long currentHeartbeat;
 	private Warehouse warehouse;
 
 	public Server(int port) {
@@ -114,7 +116,7 @@ public class Server {
 		}
 	}
 
-	public void sendMessage(User u, ServerMessage m) {
+	public void sendMessage(User u, ServerMessage m, SendMessagePacket smp) {
 		CSLogger.log(Server.class, "Sending %s to %s", m, u.getContact());
 		try {
 			if (users.contains(u)) {
@@ -127,7 +129,7 @@ public class Server {
 							Socket serverClient = new Socket("localhost", port);
 							var outServer = new ObjectOutputStream(serverClient.getOutputStream());
 							outServer = new ObjectOutputStream(serverClient.getOutputStream());
-							outServer.writeObject(new ServerMessage("message", m));
+							outServer.writeObject(new ServerMessage("message", smp));
 							serverClient.close();
 						}
 					} catch (IOException e) {
@@ -143,11 +145,11 @@ public class Server {
 		return port;
 	}
 
-	public void sendMessage(User sender, User receiver, String message) {
+	public void sendMessage2(User sender, User receiver, String message) {
 		CSLogger.log(Server.class, "Sending %s from %s to %s", message, sender.getContact(), receiver.getContact());
 		Message m = new Message(sender.getContact(), receiver.getContact(), message);
 		ServerMessage sm = new ServerMessage("message", m);
-		sendMessage(receiver, sm);
+		sendMessage(receiver, sm, null);
 	}
 
 	void registerServer(int[] portRange){
@@ -156,11 +158,14 @@ public class Server {
 				try {
 					var serverClient = new Socket("localhost", p);
 					var out = new ObjectOutputStream(serverClient.getOutputStream());
+					if(!registeredPorts.contains(p)){
+						registeredPorts.add(p);
+					}
 					out.writeObject(
 							new ServerMessage("serverlogin", getPort()));
 					serverClient.close();
 				}catch (IOException e){
-					System.err.println(e);
+					CSLogger.log(Server.class, "%s: Couldn't reach %s",getPort(),p);
 				}
 			}
 		}
@@ -221,7 +226,7 @@ public class Server {
 					Message m = new Message(system, atp.contact, invitee.name + " has joined the group!");
 					ServerMessage sm = new ServerMessage("message", m);
 					for (Contact c : g.members) {
-						sendMessage(warehouse.getUser(c), sm);
+						sendMessage(warehouse.getUser(c), sm, );
 					}
 				}
 
@@ -254,24 +259,32 @@ public class Server {
 			SendMessagePacket sm = (SendMessagePacket) message.object;
 			Message m = new Message(sm.sender, sm.receiver, sm.message);
 			warehouse.addMessage(m);
-			if (sm.receiver.type.equals(ContactType.GROUP)) {
+			if(sm.forward)
+			{
+//				sm.forward = false;
+				if (sm.receiver.type.equals(ContactType.GROUP)) {
 				for (Contact c : warehouse.getGroupsById(sm.receiver.name).get(0).members) {
-					sendMessage(warehouse.getUser(c), new ServerMessage("message", m));
+					sendMessage(warehouse.getUser(c), new ServerMessage("message", m), sm.forward(false));
 				}
 			} else {
-				sendMessage(warehouse.getUser(sm.receiver), new ServerMessage("message", m));
-				sendMessage(warehouse.getUser(sm.sender), new ServerMessage("message", m));
+				sendMessage(warehouse.getUser(sm.receiver), new ServerMessage("message", m), sm.forward(false));
+				sendMessage(warehouse.getUser(sm.sender), new ServerMessage("message", m), sm.forward(false));
+			}
 			}
 			break;
 		case "heartbeat":
+			currentHeartbeat = System.currentTimeMillis();
 			if (currentHeartbeat - lastHeartbeat > 10000) {
 				CSLogger.log(Server.class,  getPort()+": Server " + message.object + " has been lost");
+//				registeredPorts.remove(message.object);
 			}
 			lastHeartbeat = currentHeartbeat;
 			break;
 		case "serverlogin":
 			var newServer = (int)message.object;
-			registeredPorts.add(newServer);
+			if(!registeredPorts.contains(newServer)){
+				registeredPorts.add(newServer);
+			}
 			CSLogger.log(Server.class, getPort()+": Server " + newServer + " registered by Server " + getPort());
 		}
 	}

@@ -82,7 +82,7 @@ public class ChatFrame extends JFrame {
 			return;
 		}
 		manager.client.sendMessage(new ServerMessage("message",
-				new SendMessagePacket(manager.user.getContact(), currentContact, message)));
+				new SendMessagePacket(manager.user.getContact(), currentContact, message, true)));
 		textField.setText("");
 	}
 
