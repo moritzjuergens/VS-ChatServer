@@ -27,15 +27,14 @@ public class ServerThread implements Runnable {
 
 	@Override
 	public void run() {
-
-		ServerMessage m;
 		try {
+			ServerMessage m;
 			while ((m = (ServerMessage) in.readObject()) != null) {
 				server.messageReceived(m, out);
 			}
 		} catch (ClassNotFoundException e) {
 			// e.printStackTrace();
-		} catch (IOException e) {
+		} catch (IOException e) {	
 			// e.printStackTrace();
 		}
 	}

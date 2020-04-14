@@ -12,6 +12,7 @@ import javax.swing.SwingConstants;
 
 import ChatSystem.Client.Client;
 import ChatSystem.Entities.ServerMessage;
+import ChatSystem.Frontend.ChatFrameListener;
 import ChatSystem.Frontend.ComponentFactory;
 import ChatSystem.Packets.SignInUpPacket;
 
@@ -19,17 +20,14 @@ import ChatSystem.Packets.SignInUpPacket;
 public class LoginFrame extends JFrame {
 
 	private Client client = null;
-
-	public LoginFrame(Client c) {
-		this();
-		this.client = c;
-	}
-
 	JLabel feedback = ComponentFactory.getLabel("", 0, 40, 400, 30);
 
 	@SuppressWarnings("deprecation")
-	public LoginFrame() {
+	public LoginFrame(Client c) {
 
+		this.client = c;
+
+		addWindowListener(new ChatFrameListener(client));
 		setSize(400, 260);
 		setResizable(false);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -59,7 +57,7 @@ public class LoginFrame extends JFrame {
 
 		un.setText("Timo");
 		pw.setText("Pass");
-		
+
 		background.add(ComponentFactory.getButton("Login", true, 20, 150, 160, 30, (e) -> {
 			this.loginRegister(un.getText(), pw.getText(), true);
 		}));
@@ -70,9 +68,7 @@ public class LoginFrame extends JFrame {
 		background.add(title);
 		background.add(pw);
 		background.add(un);
-		pack();
 		setVisible(true);
-
 	}
 
 	private void loginRegister(String name, String password, boolean isLogin) {
@@ -80,7 +76,7 @@ public class LoginFrame extends JFrame {
 			return;
 		client.sendMessage(new ServerMessage("sign" + (isLogin ? "in" : "up"), new SignInUpPacket(name, password)));
 	}
-	
+
 	public void signResponseReceived(String message) {
 		feedback.setText(message);
 	}

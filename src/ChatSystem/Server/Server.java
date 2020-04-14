@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import ChatSystem.CSLogger;
+import ChatSystem.Controller;
 import ChatSystem.DWH.Warehouse;
 import ChatSystem.Entities.Contact;
 import ChatSystem.Entities.Contact.ContactType;
@@ -32,19 +33,23 @@ public class Server {
 
 	private List<User> users = new ArrayList<User>();
 	public List<String> registeredPorts = new ArrayList<>();
-	private ServerSocket ss;
+	protected ServerSocket ss;
+
 	public Contact system = new Contact("System", ContactType.SYSTEM);
 	public int port;
 	public long lastHeartbeat = 0;
 	private Warehouse warehouse;
-	
+
 	private boolean firstBroadcast = true;
+	public Controller controllerUI;
 
-	public Server(int port) {
-
+	public Server(Controller controllerUI, int port) {
+		this.controllerUI = controllerUI;
 		this.port = port;
 		this.warehouse = new Warehouse(this);
 		this.warehouse.loadFiles();
+		Server.registeredServer.add(this);
+		controllerUI.updateServer();
 
 		new Thread(() -> {
 			try {
@@ -58,14 +63,17 @@ public class Server {
 							break;
 						}
 					}
+					for(User u : users) {
+						sendMessage(u.out, new ServerMessage("close", "" + port));
+					}
 				}).start();
 				broadcast(new ServerMessage("heartbeat", getPort()), Arrays.asList(portRange));
 
 			} catch (IOException e) {
 			} finally {
 				CSLogger.log(Server.class, "Server listening on port %s", port);
-				Server.registeredServer.add(this);
 			}
+			System.out.println("setup end");
 		}).start();
 	}
 
@@ -84,6 +92,8 @@ public class Server {
 		try {
 			CSLogger.log(Server.class, "Shutting down Server %s", ss.getLocalPort());
 			ss.close();
+			ss = null;
+			System.out.println("ab");
 		} catch (IOException | NullPointerException e) {
 		}
 	}
@@ -95,11 +105,17 @@ public class Server {
 		}
 		u.out = out;
 		users.add(u);
+		this.controllerUI.updateServer();
 		this.sendMessage(out, new ServerMessage("welcome", new WelcomePacket(u, warehouse.getUserData(u))));
 	}
 
 	public void unregisterClient(User u) {
 		this.users.remove(u);
+		this.controllerUI.updateServer();
+	}
+
+	public int clientCount() {
+		return this.users.size();
 	}
 
 	public void sendMessage(ObjectOutputStream out, ServerMessage m) {
@@ -128,15 +144,15 @@ public class Server {
 						Socket serverClient = new Socket("localhost", port);
 						ObjectOutputStream outServer = new ObjectOutputStream(serverClient.getOutputStream());
 						outServer.writeObject(sm);
-						
-						if(firstBroadcast) {
+
+						if (firstBroadcast) {
 							firstBroadcast = false;
-							for(String s : new String[] {"messages", "groups", "users"}) {
+							for (String s : new String[] { "messages", "groups", "users" }) {
 								ServerMessage fm = new ServerMessage("fetch" + s, lastHeartbeat);
 								outServer.writeObject(fm);
 							}
 						}
-						
+
 						outServer.flush();
 						serverClient.close();
 						if (!registeredPorts.contains("" + port)) {
@@ -162,9 +178,10 @@ public class Server {
 	@SuppressWarnings("unchecked")
 	public void messageReceived(ServerMessage message, ObjectOutputStream out) {
 		CSLogger.log(Server.class, "[%s\t] Message received: %s", getPort(), message);
-		
-		if(message.equals(null)) return;
-		
+
+		if (message.equals(null))
+			return;
+
 		switch (message.prefix.toLowerCase()) {
 		case "signin":
 			synchronized (users) {
@@ -219,8 +236,7 @@ public class Server {
 
 			if (atp.forward) {
 				broadcast(new ServerMessage("addto", atp.forward(false)));
-			}
-			else {
+			} else {
 				warehouse.updateHeartBeat(System.currentTimeMillis());
 			}
 
@@ -275,8 +291,7 @@ public class Server {
 			SendMessagePacket sm = (SendMessagePacket) message.object;
 			if (sm.forward) {
 				this.broadcast(new ServerMessage("message", sm.forward(false)));
-			}
-			else {
+			} else {
 				warehouse.updateHeartBeat(System.currentTimeMillis());
 			}
 
@@ -303,7 +318,7 @@ public class Server {
 			sendMessage(out, new ServerMessage("messages", warehouse.getMessagesAfter((long) message.object)));
 			break;
 		case "messages":
-			for(Message messages : (List<Message>) message.object) {
+			for (Message messages : (List<Message>) message.object) {
 				warehouse.addMessage(messages);
 			}
 			break;
@@ -312,19 +327,30 @@ public class Server {
 			sendMessage(out, new ServerMessage("groups", warehouse.getGroupsAfter((long) message.object)));
 			break;
 		case "groups":
-			for(Group groups : (List<Group>) message.object) {
+			for (Group groups : (List<Group>) message.object) {
 				warehouse.addGroup(groups);
 			}
 			break;
 
 		case "fetchusers":
+			System.out.println("fetching users");
 			sendMessage(out, new ServerMessage("users", warehouse.getUsersAfter((long) message.object)));
 			break;
 		case "users":
-			for(User users : (List<User>) message.object) {
+			System.out.println("users received");
+			for (User users : (List<User>) message.object) {
 				warehouse.addUser(users);
 			}
 			break;
 		}
+	}
+
+	public void shutdown() {
+		System.out.println("B: " + Thread.getAllStackTraces().keySet().size());
+		this.warehouse = null;
+		close();
+		Server.registeredServer.remove(this);
+		this.controllerUI.updateServer();
+		System.out.println("A: " + Thread.getAllStackTraces().keySet().size());
 	}
 }
