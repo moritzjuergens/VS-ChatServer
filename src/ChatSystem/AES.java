@@ -29,31 +29,41 @@ public class AES {
 		}
 	}
 
-	// Verschlüsseln
+	// VerschlÃ¼sseln
 
-	public static Object encrypt(Object strToEncrypt) {
-		try {
-			setKey(key_string);
-			Cipher cipher = Cipher.getInstance(algorithmus);
-			cipher.init(Cipher.ENCRYPT_MODE, secretKey);
-			return Base64.getEncoder().encodeToString(cipher.doFinal(strToEncrypt.getBytes("UTF-8")));
-		} catch (Exception e) {
-			System.out.println("Fehler bei der Verschlüsselung: " + e.toString());
-		}
-		return null;
+	public static Object encrypt(Object ObjectToEncrypt) {
+		return ObjectToEncrypt;
+//		try {
+//			setKey(key_string);
+//			Cipher cipher = Cipher.getInstance(algorithmus);
+//			cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+//
+//			String strToEncrypt = ObjectToEncrypt.toString();
+//			Object ergebnis_encrypt = Base64.getEncoder()
+//					.encodeToString(cipher.doFinal(strToEncrypt.getBytes("UTF-8")));
+//			return ergebnis_encrypt;
+//		} catch (Exception e) {
+//			System.out.println("Fehler bei der VerschlÃ¼sselung: " + e.toString());
+//		}
+//		return null;
 	}
 
-	// Entschlüsseln
+	// EntschlÃ¼sseln
 
-	public static Object decrypt(Object strToDecrypt) {
-		try {
-			setKey(key_string);
-			Cipher cipher = Cipher.getInstance(algorithmus);
-			cipher.init(Cipher.DECRYPT_MODE, secretKey);
-			return new String(cipher.doFinal(Base64.getDecoder().decode(strToDecrypt)));
-		} catch (Exception e) {
-			System.out.println("Fehler bei der Entschlüsselung: " + e.toString());
-		}
-		return null;
+	public static Object decrypt(Object ObjectToDecrypt) {
+		return ObjectToDecrypt;
+//		try {
+//			setKey(key_string);
+//			Cipher cipher = Cipher.getInstance(algorithmus);
+//			cipher.init(Cipher.DECRYPT_MODE, secretKey);
+//
+//			String strToDecrypt = ObjectToDecrypt.toString();
+//			Object ergebnis_decrypt = new String(cipher.doFinal(Base64.getDecoder().decode(strToDecrypt)));
+//			return ergebnis_decrypt;
+//
+//		} catch (Exception e) {
+//			System.out.println("Fehler bei der EntschlÃ¼sselung: " + e.toString());
+//		}
+//		return null;
 	}
 }

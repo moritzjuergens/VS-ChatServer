@@ -17,5 +17,4 @@ public class ChatSystem {
 			Client.closeAll();
 		}));
 	}
-
 }
