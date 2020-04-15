@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+import ChatSystem.AES;
 import ChatSystem.CSLogger;
 import ChatSystem.Controller;
 import ChatSystem.Entities.Contact;
@@ -59,12 +60,8 @@ public class Client extends Thread {
 				new Thread(() -> {
 					while (true) {
 						try {
-							Object o = in.readObject();
-
-							System.out.println(o);
-							ServerMessage m = (ServerMessage) o;
+							ServerMessage m = (ServerMessage) AES.decrypt(in.readObject());
 							this.messageReceived(m);
-
 						} catch (ClassNotFoundException | IOException e) {
 						}
 					}
@@ -124,9 +121,9 @@ public class Client extends Thread {
 		}
 		try {
 			CSLogger.log(Client.class, "Sending %s", message);
-			out.writeObject(new ServerMessage("ping", "pong"));
-			out.writeObject(new ServerMessage("clinton", "pong"));
-			out.writeObject(message);
+			out.writeObject(AES.encrypt(new ServerMessage("ping", "pong")));
+			out.writeObject(AES.encrypt(new ServerMessage("clinton", "pong")));
+			out.writeObject(AES.encrypt(message));
 		} catch (IOException e) {
 			close();
 			CSLogger.log(Client.class, "Der Server ist nicht erreichbar");

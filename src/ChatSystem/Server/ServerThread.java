@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+import ChatSystem.AES;
 import ChatSystem.Entities.ServerMessage;
 
 public class ServerThread implements Runnable {
@@ -29,7 +30,7 @@ public class ServerThread implements Runnable {
 	public void run() {
 		try {
 			ServerMessage m;
-			while ((m = (ServerMessage) in.readObject()) != null && !server.shutdown) {
+			while ((m = (ServerMessage) AES.decrypt(in.readObject())) != null && !server.shutdown) {
 				server.messageReceived(m, out);
 			}
 			System.out.println("allo");

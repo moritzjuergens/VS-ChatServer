@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+import ChatSystem.AES;
 import ChatSystem.CSLogger;
 import ChatSystem.Controller;
 import ChatSystem.DWH.Warehouse;
@@ -123,7 +124,7 @@ public class Server {
 
 	public void sendMessage(ObjectOutputStream out, ServerMessage m) {
 		try {
-			out.writeObject(m);
+			out.writeObject(AES.encrypt(m));
 			out.flush();
 		} catch (IOException e) {
 //			e.printStackTrace();

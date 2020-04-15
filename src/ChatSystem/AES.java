@@ -13,6 +13,7 @@ public class AES {
 	private static final String algorithmus = "AES";
 	private static SecretKeySpec secretKey;
 	private static byte[] key;
+	public static final String key_string = "ADGE154ADR87DSW6";
 
 	public static void setKey(String myKey) throws Exception {
 
@@ -30,9 +31,9 @@ public class AES {
 
 	// Verschlüsseln
 
-	public static String encrypt(String strToEncrypt, String secret) {
+	public static Object encrypt(Object strToEncrypt) {
 		try {
-			setKey(secret);
+			setKey(key_string);
 			Cipher cipher = Cipher.getInstance(algorithmus);
 			cipher.init(Cipher.ENCRYPT_MODE, secretKey);
 			return Base64.getEncoder().encodeToString(cipher.doFinal(strToEncrypt.getBytes("UTF-8")));
@@ -44,9 +45,9 @@ public class AES {
 
 	// Entschlüsseln
 
-	public static String decrypt(String strToDecrypt, String secret) {
+	public static Object decrypt(Object strToDecrypt) {
 		try {
-			setKey(secret);
+			setKey(key_string);
 			Cipher cipher = Cipher.getInstance(algorithmus);
 			cipher.init(Cipher.DECRYPT_MODE, secretKey);
 			return new String(cipher.doFinal(Base64.getDecoder().decode(strToDecrypt)));
