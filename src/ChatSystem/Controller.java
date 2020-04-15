@@ -97,7 +97,6 @@ public class Controller extends JFrame {
 		clientContainer.removeAll();
 		int clientCount = 0;
 		for(Client c : Client.registeredClients) {
-			System.out.println("adding client");
 			clientContainer.add(new JLabel("    Client #" + ++clientCount));
 			if(c.chat == null || c.chat.user == null ) {
 				clientContainer.add(new JLabel("not signed in"));

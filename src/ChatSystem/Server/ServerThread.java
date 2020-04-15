@@ -21,7 +21,7 @@ public class ServerThread implements Runnable {
 			out = new ObjectOutputStream(socket.getOutputStream());
 			in = new ObjectInputStream(socket.getInputStream());
 		} catch (IOException e) {
-			e.printStackTrace();
+//			e.printStackTrace();
 		}
 	}
 
@@ -29,12 +29,14 @@ public class ServerThread implements Runnable {
 	public void run() {
 		try {
 			ServerMessage m;
-			while ((m = (ServerMessage) in.readObject()) != null) {
+			while ((m = (ServerMessage) in.readObject()) != null && !server.shutdown) {
 				server.messageReceived(m, out);
 			}
-		} catch (ClassNotFoundException e) {
-			// e.printStackTrace();
-		} catch (IOException e) {	
+			System.out.println("allo");
+			out.close();
+			in.close();
+			socket.close();
+		} catch (ClassNotFoundException | IOException e) {
 			// e.printStackTrace();
 		}
 	}

@@ -22,6 +22,7 @@ import ChatSystem.Entities.User;
 import ChatSystem.Packets.AddToPacket;
 import ChatSystem.Packets.AllContactsPacket;
 import ChatSystem.Packets.CreateGroupPacket;
+import ChatSystem.Packets.FetchPacket;
 import ChatSystem.Packets.SendMessagePacket;
 import ChatSystem.Packets.SignInUpPacket;
 import ChatSystem.Packets.WelcomePacket;
@@ -35,6 +36,7 @@ public class Server {
 	public List<String> registeredPorts = new ArrayList<>();
 	protected ServerSocket ss;
 
+	public boolean shutdown = false;
 	public Contact system = new Contact("System", ContactType.SYSTEM);
 	public int port;
 	public long lastHeartbeat = 0;
@@ -56,15 +58,12 @@ public class Server {
 				ss = new ServerSocket(port);
 				var pool = Executors.newCachedThreadPool();
 				new Thread(() -> {
-					while (true) {
+					while (!shutdown) {
 						try {
 							pool.execute(new ServerThread(this, ss.accept()));
 						} catch (IOException e) {
 							break;
 						}
-					}
-					for(User u : users) {
-						sendMessage(u.out, new ServerMessage("close", "" + port));
 					}
 				}).start();
 				broadcast(new ServerMessage("heartbeat", getPort()), Arrays.asList(portRange));
@@ -73,7 +72,6 @@ public class Server {
 			} finally {
 				CSLogger.log(Server.class, "Server listening on port %s", port);
 			}
-			System.out.println("setup end");
 		}).start();
 	}
 
@@ -93,20 +91,25 @@ public class Server {
 			CSLogger.log(Server.class, "Shutting down Server %s", ss.getLocalPort());
 			ss.close();
 			ss = null;
-			System.out.println("ab");
 		} catch (IOException | NullPointerException e) {
 		}
 	}
 
-	public void registerClient(User u, ObjectOutputStream out) {
-		if (users.contains(u)) {
+	public void registerClient(User u, ObjectOutputStream out, SignInUpPacket data) {
+		if(users.stream().filter(x -> x.equals(u)).count() > 0) {			
 			this.sendMessage(out, new ServerMessage("signresponse", "You're already signed in"));
 			return;
 		}
 		u.out = out;
 		users.add(u);
 		this.controllerUI.updateServer();
-		this.sendMessage(out, new ServerMessage("welcome", new WelcomePacket(u, warehouse.getUserData(u))));
+		if (!data.alreadySignedIn) {
+			this.sendMessage(out, new ServerMessage("welcome", new WelcomePacket(u, warehouse.getUserData(u))));
+		} else {
+			for (Message m : warehouse.getMessagesForUserAfter(u.getContact(), data.timestamp)) {
+				sendMessage(out, new ServerMessage("message", m));
+			}
+		}
 	}
 
 	public void unregisterClient(User u) {
@@ -123,16 +126,17 @@ public class Server {
 			out.writeObject(m);
 			out.flush();
 		} catch (IOException e) {
-			e.printStackTrace();
+//			e.printStackTrace();
 		}
 	}
 
 	public void sendMessage(Contact c, ServerMessage m) {
 		CSLogger.log(Server.class, "[%s\t] Sending %s to %s", getPort(), m, c);
-		User u = warehouse.getUser(c);
-		if (users.contains(u)) {
-			sendMessage(u.out, m);
-		}
+		users.stream().forEach(x -> {
+			if(x.name.equals(c.name)) {
+				sendMessage(x.out, m);
+			}
+		});
 	}
 
 	public void broadcast(ServerMessage sm, List<Integer> ports) {
@@ -147,13 +151,12 @@ public class Server {
 
 						if (firstBroadcast) {
 							firstBroadcast = false;
-							for (String s : new String[] { "messages", "groups", "users" }) {
-								ServerMessage fm = new ServerMessage("fetch" + s, lastHeartbeat);
-								outServer.writeObject(fm);
-							}
+							ServerMessage fm = new ServerMessage("fetch", lastHeartbeat + "_" + this.port);
+							outServer.writeObject(fm);
 						}
 
 						outServer.flush();
+						outServer.close();
 						serverClient.close();
 						if (!registeredPorts.contains("" + port)) {
 							registeredPorts.add("" + port);
@@ -175,7 +178,6 @@ public class Server {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public void messageReceived(ServerMessage message, ObjectOutputStream out) {
 		CSLogger.log(Server.class, "[%s\t] Message received: %s", getPort(), message);
 
@@ -196,7 +198,7 @@ public class Server {
 					break;
 				}
 				synchronized (users) {
-					this.registerClient(u, out);
+					this.registerClient(u, out, data);
 				}
 
 			}
@@ -214,7 +216,7 @@ public class Server {
 				warehouse.addUser(u);
 
 				synchronized (users) {
-					this.registerClient(u, out);
+					this.registerClient(u, out, data);
 				}
 			}
 			break;
@@ -314,31 +316,25 @@ public class Server {
 				}
 			}
 			break;
-		case "fetchmessages":
-			sendMessage(out, new ServerMessage("messages", warehouse.getMessagesAfter((long) message.object)));
+		case "fetch":
+			String[] split = ((String) message.object).split("_");
+			long timestamp = Long.parseLong(split[0]);
+			Integer[] port = new Integer[] { Integer.parseInt(split[1]) };
+
+			FetchPacket fp = new FetchPacket(warehouse.getMessagesAfter(timestamp), warehouse.getGroupsAfter(timestamp),
+					warehouse.getUsersAfter(timestamp));
+			broadcast(new ServerMessage("fetchreceive", fp), Arrays.asList(port));
+
 			break;
-		case "messages":
-			for (Message messages : (List<Message>) message.object) {
+		case "fetchreceive":
+			FetchPacket fpr = (FetchPacket) message.object;
+			for (Message messages : fpr.messages) {
 				warehouse.addMessage(messages);
 			}
-			break;
-
-		case "fetchgroups":
-			sendMessage(out, new ServerMessage("groups", warehouse.getGroupsAfter((long) message.object)));
-			break;
-		case "groups":
-			for (Group groups : (List<Group>) message.object) {
+			for (Group groups : fpr.groups) {
 				warehouse.addGroup(groups);
 			}
-			break;
-
-		case "fetchusers":
-			System.out.println("fetching users");
-			sendMessage(out, new ServerMessage("users", warehouse.getUsersAfter((long) message.object)));
-			break;
-		case "users":
-			System.out.println("users received");
-			for (User users : (List<User>) message.object) {
+			for (User users : fpr.users) {
 				warehouse.addUser(users);
 			}
 			break;
@@ -346,11 +342,9 @@ public class Server {
 	}
 
 	public void shutdown() {
-		System.out.println("B: " + Thread.getAllStackTraces().keySet().size());
-		this.warehouse = null;
+		this.shutdown = true;
 		close();
 		Server.registeredServer.remove(this);
 		this.controllerUI.updateServer();
-		System.out.println("A: " + Thread.getAllStackTraces().keySet().size());
 	}
 }

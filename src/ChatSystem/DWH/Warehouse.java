@@ -209,6 +209,18 @@ public class Warehouse {
 		}).collect(Collectors.toList());
 	}
 
+	public List<Message> getMessagesForUserAfter(Contact user, long timestamp) {
+		return getMessages().stream().filter(x -> {
+			if (x.sender.equals(user) || x.receiver.equals(user))
+				return true;
+			if (x.receiver.type.equals(ContactType.GROUP)) {
+				Group g = getGroupById(x.receiver.name);
+				return g.members.contains(user);
+			}
+			return false;
+		}).filter(x -> x.timestamp >= timestamp).collect(Collectors.toList());
+	}
+
 	public List<Group> getGroupsById(String id) {
 		return getGroups().stream().filter(x -> id.equals(x.id + "")).collect(Collectors.toList());
 	}

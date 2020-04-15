@@ -151,6 +151,8 @@ public class ChatFrame extends JFrame {
 		for (Contact c : chatData.keySet()) {
 
 			Message m = manager.getLatestMessageWith(c);
+			
+			if(m == null || m.sender == null) continue;
 			String name = (m.sender.name.equals(manager.user.name) ? "You: " : "");
 
 			contactWrapper.add(ComponentFactory.getContact(c.type.equals(ContactType.GROUP) ? c.shortName : c.name,

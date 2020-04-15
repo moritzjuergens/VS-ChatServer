@@ -74,7 +74,7 @@ public class LoginFrame extends JFrame {
 	private void loginRegister(String name, String password, boolean isLogin) {
 		if (name.length() == 0 || password.length() == 0)
 			return;
-		client.sendMessage(new ServerMessage("sign" + (isLogin ? "in" : "up"), new SignInUpPacket(name, password)));
+		client.sendMessage(new ServerMessage("sign" + (isLogin ? "in" : "up"), new SignInUpPacket(name, password, false, 0)));
 	}
 
 	public void signResponseReceived(String message) {

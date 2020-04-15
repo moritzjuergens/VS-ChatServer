@@ -65,7 +65,7 @@ public class ChatManager {
 			try {
 				return chatData.get(c).get(chatData.get(c).size() - 1);
 			} catch (Exception e) {
-				System.out.println("Feheler bei ChatManager Zeile 56");
+				System.out.println("Fehler bei ChatManager Zeile 68");
 				return null;
 			}
 		}

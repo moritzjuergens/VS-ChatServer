@@ -21,7 +21,7 @@ public class WelcomePacket implements Serializable {
 		this.user = user;
 		this.userData = userData;
 	}
-	
+
 	private void writeObject(ObjectOutputStream out) throws IOException {
 		out.writeObject(this.user);
 		out.writeObject(this.userData);
@@ -31,6 +31,7 @@ public class WelcomePacket implements Serializable {
 	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 		this.user = (User) in.readObject();
 		this.userData = (HashMap<Contact, List<Message>>) in.readObject();
+
 	}
 
 	public String toString() {

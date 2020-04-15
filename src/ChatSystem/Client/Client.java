@@ -18,6 +18,7 @@ import ChatSystem.Entities.ServerMessage;
 import ChatSystem.Frontend.ChatManager;
 import ChatSystem.Frontend.Frames.LoginFrame;
 import ChatSystem.Packets.AllContactsPacket;
+import ChatSystem.Packets.SignInUpPacket;
 import ChatSystem.Packets.WelcomePacket;
 import ChatSystem.Server.Server;
 
@@ -28,7 +29,9 @@ public class Client extends Thread {
 	public int port;
 	public List<String> portsToTrie = new ArrayList<>();
 	public Controller controllerUI;
-	private Thread receiveThread;
+	public long lastTimeStamp = 0;
+	private List<ServerMessage> messageQueue = new ArrayList<>();
+	private boolean reconnecting = false;
 
 	Socket s;
 	ObjectInputStream in;
@@ -53,18 +56,30 @@ public class Client extends Thread {
 				out = new ObjectOutputStream(s.getOutputStream());
 				in = new ObjectInputStream(s.getInputStream());
 
-				receiveThread = new Thread(() -> {
+				new Thread(() -> {
 					while (true) {
 						try {
-							ServerMessage m = (ServerMessage) in.readObject();
+							Object o = in.readObject();
+
+							System.out.println(o);
+							ServerMessage m = (ServerMessage) o;
 							this.messageReceived(m);
+
 						} catch (ClassNotFoundException | IOException e) {
 						}
 					}
-				});
-				receiveThread.start();
+				}).start();
 				portsToTrie = Arrays.stream(Server.portRange).map(x -> "" + x).collect(Collectors.toList());
 				CSLogger.log(Client.class, "Client using server %s", port);
+				reconnecting = false;
+				messageQueue.stream().forEach(this::sendMessage);
+				messageQueue.clear();
+
+				if (chat != null && chat.user != null) {
+					sendMessage(new ServerMessage("signin",
+							new SignInUpPacket(chat.user.name, chat.user.password, true, lastTimeStamp)));
+				}
+
 			} catch (IOException e) {
 				CSLogger.log(Client.class, "Client cant use Server %s", port);
 
@@ -86,7 +101,7 @@ public class Client extends Thread {
 			out.close();
 			s.close();
 		} catch (IOException e) {
-			e.printStackTrace();
+//			e.printStackTrace();
 		}
 
 	}
@@ -103,22 +118,33 @@ public class Client extends Thread {
 	}
 
 	public void sendMessage(ServerMessage message) {
+		if (reconnecting) {
+			messageQueue.add(message);
+			return;
+		}
 		try {
 			CSLogger.log(Client.class, "Sending %s", message);
+			out.writeObject(new ServerMessage("ping", "pong"));
+			out.writeObject(new ServerMessage("clinton", "pong"));
 			out.writeObject(message);
-			System.out.println("SCo: " + s.isConnected());
-			System.out.println("SCl: " + s.isClosed());
-			System.out.println("SIn: " + s.isInputShutdown());
-			System.out.println("SOu: " + s.isOutputShutdown());
-
 		} catch (IOException e) {
+			close();
 			CSLogger.log(Client.class, "Der Server ist nicht erreichbar");
+
+			this.reconnecting = true;
+			this.lastTimeStamp = System.currentTimeMillis();
+
+			portsToTrie.remove("" + port);
+			messageQueue.add(message);
+
+			connect();
 		}
 	}
 
-	@SuppressWarnings("deprecation")
 	public void messageReceived(ServerMessage message) {
 		CSLogger.log(Client.class, "Message received: %s", message);
+		if (message == null)
+			return;
 		switch (message.prefix.toLowerCase()) {
 		case "signresponse":
 			loginFrame.signResponseReceived((String) message.object);
@@ -136,11 +162,6 @@ public class Client extends Thread {
 			break;
 		case "openchat":
 			chat.openChatWith((Contact) message.object);
-			break;
-		case "close":
-			portsToTrie.remove((String) message.object);
-			receiveThread.stop();
-			connect();
 			break;
 		}
 	}

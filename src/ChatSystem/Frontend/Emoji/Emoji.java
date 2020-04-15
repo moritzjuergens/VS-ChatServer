@@ -10,7 +10,7 @@ public enum Emoji {
 	NAUSEATED("nauseated.png", "nauseated"), CALLME("Nicos.png", "Nico"), OTTER("otter.png", "otter"),
 	PEACH("peach.png", "butt"), PIZZA("pizza.png", "pizza"), POOP("poop.png", "poop"),
 	PRINCESS("princess.png", "princess"), SPLASH("splash.png", "splash"), OK("Timo.png", "Timo"),
-	TREX("t-rex.png", "trex"), HEARTS("two-hearts.png", "<33"), NAILS("Veli.png", "Veli");
+	TREX("t-rex.png", "trex"), HEARTS("two-hearts.png", "<33"), NAILS("Veli.png", "Veli"), CLINTON("Clinton.png", "Clinton");
 
 	public String name;
 	public String shortcut;
