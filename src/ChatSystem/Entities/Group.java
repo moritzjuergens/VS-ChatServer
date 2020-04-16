@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import ChatSystem.AES;
 import ChatSystem.RandomGroupNameGenerator;
 import ChatSystem.Entities.Contact.ContactType;
 
@@ -44,7 +45,7 @@ public class Group implements Serializable {
 		out.writeLong(this.id);
 		out.writeObject(this.members);
 		out.writeObject(this.creator);
-		out.writeObject(this.name);
+		out.writeObject(AES.encrypt(this.name));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -52,7 +53,7 @@ public class Group implements Serializable {
 		this.id = in.readLong();
 		this.members = (ArrayList<Contact>) in.readObject();
 		this.creator = (Contact) in.readObject();
-		this.name = (String) in.readObject();
+		this.name = AES.decrypt((String) in.readObject());
 	}
 
 	public String toString() {

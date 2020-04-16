@@ -1,6 +1,8 @@
 package ChatSystem;
 
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Base64;
 
@@ -9,61 +11,44 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class AES {
 
-	// Verfahren festlegen
-	private static final String algorithmus = "AES";
+	private static final String secret = "Bill Clinton DidNothingWrong :) AndTHatsTRUE!!";
 	private static SecretKeySpec secretKey;
 	private static byte[] key;
-	public static final String key_string = "ADGE154ADR87DSW6";
-
-	public static void setKey(String myKey) throws Exception {
-
+	
+	public static void init() {
 		MessageDigest sha = null;
 		try {
-			key = myKey.getBytes("UTF-8");
+			key = secret.getBytes("UTF-8");
 			sha = MessageDigest.getInstance("SHA-1");
 			key = sha.digest(key);
 			key = Arrays.copyOf(key, 16);
-			secretKey = new SecretKeySpec(key, algorithmus);
-		} catch (Exception e) {
+			secretKey = new SecretKeySpec(key, "AES");
+		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}		
+	}
+
+	public static String encrypt(String strToEncrypt) {
+		try {
+			Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+			cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+			return Base64.getEncoder().encodeToString(cipher.doFinal(strToEncrypt.getBytes("UTF-8")));
+		} catch (Exception e) {
+			System.out.println("Error while encrypting: " + e.toString());
 		}
+		return null;
 	}
 
-	// Verschlüsseln
-
-	public static Object encrypt(Object ObjectToEncrypt) {
-		return ObjectToEncrypt;
-//		try {
-//			setKey(key_string);
-//			Cipher cipher = Cipher.getInstance(algorithmus);
-//			cipher.init(Cipher.ENCRYPT_MODE, secretKey);
-//
-//			String strToEncrypt = ObjectToEncrypt.toString();
-//			Object ergebnis_encrypt = Base64.getEncoder()
-//					.encodeToString(cipher.doFinal(strToEncrypt.getBytes("UTF-8")));
-//			return ergebnis_encrypt;
-//		} catch (Exception e) {
-//			System.out.println("Fehler bei der Verschlüsselung: " + e.toString());
-//		}
-//		return null;
-	}
-
-	// Entschlüsseln
-
-	public static Object decrypt(Object ObjectToDecrypt) {
-		return ObjectToDecrypt;
-//		try {
-//			setKey(key_string);
-//			Cipher cipher = Cipher.getInstance(algorithmus);
-//			cipher.init(Cipher.DECRYPT_MODE, secretKey);
-//
-//			String strToDecrypt = ObjectToDecrypt.toString();
-//			Object ergebnis_decrypt = new String(cipher.doFinal(Base64.getDecoder().decode(strToDecrypt)));
-//			return ergebnis_decrypt;
-//
-//		} catch (Exception e) {
-//			System.out.println("Fehler bei der Entschlüsselung: " + e.toString());
-//		}
-//		return null;
+	public static String decrypt(String strToDecrypt) {
+		try {
+			Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");
+			cipher.init(Cipher.DECRYPT_MODE, secretKey);
+			return new String(cipher.doFinal(Base64.getDecoder().decode(strToDecrypt)));
+		} catch (Exception e) {
+			System.out.println("Error while decrypting: " + e.toString());
+		}
+		return null;
 	}
 }

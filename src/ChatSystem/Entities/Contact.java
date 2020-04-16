@@ -5,12 +5,14 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
+import ChatSystem.AES;
+
 @SuppressWarnings("serial")
 public class Contact implements Serializable {
 
 	public String name;
 	public ContactType type;
-	public String shortName;
+	public String shortName = "";
 
 	public Contact(String name, ContactType type, String shortName) {
 		this(name, type);
@@ -43,15 +45,15 @@ public class Contact implements Serializable {
 	}
 
 	private void writeObject(ObjectOutputStream out) throws IOException {
-		out.writeObject(this.name);
+		out.writeObject(AES.encrypt(this.name));
 		out.writeObject(this.type);
-		out.writeObject(this.shortName);
+		out.writeObject(AES.encrypt(this.shortName));
 	}
 
 	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-		this.name = (String) in.readObject();
+		this.name = AES.decrypt((String) in.readObject());
 		this.type = (ContactType) in.readObject();
-		this.shortName = (String) in.readObject();
+		this.shortName = AES.decrypt((String) in.readObject());
 	}
 
 }

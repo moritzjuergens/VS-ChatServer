@@ -5,6 +5,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
+import ChatSystem.AES;
+
 @SuppressWarnings("serial")
 public class ServerMessage implements Serializable {
 
@@ -17,12 +19,12 @@ public class ServerMessage implements Serializable {
 	}
 
 	private void writeObject(ObjectOutputStream out) throws IOException {
-		out.writeObject(this.prefix);
+		out.writeObject(AES.encrypt(this.prefix));
 		out.writeObject(this.object);
 	}
 
 	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-		this.prefix = (String) in.readObject();
+		this.prefix = AES.decrypt((String) in.readObject());
 		this.object = in.readObject();
 	}
 

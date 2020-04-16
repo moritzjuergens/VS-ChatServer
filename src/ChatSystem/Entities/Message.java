@@ -5,6 +5,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
+import ChatSystem.AES;
+
 @SuppressWarnings("serial")
 public class Message implements Comparable<Message>, Serializable {
 
@@ -14,14 +16,10 @@ public class Message implements Comparable<Message>, Serializable {
 	public String message;
 
 	public Message(Contact sender, Contact receiver, String message) {
-		this(sender, receiver, message, System.currentTimeMillis());
-	}
-
-	public Message(Contact sender, Contact receiver, String message, long timestamp) {
 		this.sender = sender;
 		this.receiver = receiver;
 		this.message = message;
-		this.timestamp = timestamp;
+		this.timestamp = System.currentTimeMillis();
 	}
 
 	public boolean equals(Message m) {
@@ -35,14 +33,14 @@ public class Message implements Comparable<Message>, Serializable {
 		out.writeLong(this.timestamp);
 		out.writeObject(this.sender);
 		out.writeObject(this.receiver);
-		out.writeObject(this.message);
+		out.writeObject(AES.encrypt(this.message));
 	}
 
 	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 		this.timestamp = in.readLong();
 		this.sender = (Contact) in.readObject();
 		this.receiver = (Contact) in.readObject();
-		this.message = (String) in.readObject();
+		this.message = AES.decrypt((String) in.readObject());
 	}
 
 	public String toString() {
