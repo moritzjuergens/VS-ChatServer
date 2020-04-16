@@ -42,6 +42,11 @@ public class ChatFrame extends JFrame {
 	private ChatManager manager;
 	private JLabel background = new JLabel(new ImageIcon("./assets/chat.png"));
 
+	/**
+	 * Opens a new chat frame when client has received login confirmation
+	 * 
+	 * @param manager Chatmanager
+	 */
 	public ChatFrame(ChatManager manager) {
 
 		this.manager = manager;
@@ -76,30 +81,56 @@ public class ChatFrame extends JFrame {
 		addWindowListener(new ChatFrameListener(manager));
 	}
 
+	/**
+	 * send typed message to server
+	 */
 	public void sendMessage() {
 		String message = textField.getText();
+
+		// check if message is not null
 		if (message.length() == 0) {
 			return;
 		}
+
+		// send message and clear input
 		manager.client.sendMessage(new ServerMessage("message",
 				new SendMessagePacket(manager.user.getContact(), currentContact, message, true)));
 		textField.setText("");
 	}
 
+	/**
+	 * Insert Emoji to inputfield
+	 * 
+	 * @param emoji Emoji
+	 */
 	public void insertEmoji(Emoji emoji) {
 		textField.setText(textField.getText() + ":" + emoji + ":");
 	}
 
+	/**
+	 * remove all messages
+	 */
 	public void removeAllMessages() {
 		this.chatPane.setText("");
 	}
 
+	/**
+	 * insert messages
+	 * 
+	 * @param list List<Message>
+	 */
 	public void setMessages(List<Message> list) {
 		list.stream().forEach(this::addMessage);
 	}
 
+	/**
+	 * insert a message
+	 * 
+	 * @param m Message
+	 */
 	public void addMessage(Message m) {
 
+		// Generate message's prefix
 		String prefix = "";
 		if (m.sender.type.equals(ContactType.SYSTEM)) {
 			prefix = "[" + m.sender.name + "] ";
@@ -109,6 +140,8 @@ public class ChatFrame extends JFrame {
 		if (m.sender.equals(manager.user.getContact())) {
 			prefix = "You: ";
 		}
+
+		// Determine color
 		Color c = new Color(0, 136, 255);
 		if (prefix.equalsIgnoreCase("You: ")) {
 			c = new Color(37, 202, 73);
@@ -117,8 +150,10 @@ public class ChatFrame extends JFrame {
 		}
 		String msg = m.message + "\n";
 
+		// Update chatPane
 		chatPane.setEditable(true);
 
+		// Set colors and insert prefix
 		StyleContext sc = StyleContext.getDefaultStyleContext();
 		AttributeSet aset = sc.addAttribute(SimpleAttributeSet.EMPTY, StyleConstants.Alignment,
 				StyleConstants.ALIGN_JUSTIFIED);
@@ -131,6 +166,7 @@ public class ChatFrame extends JFrame {
 		chatPane.setCharacterAttributes(aset, false);
 		chatPane.replaceSelection("\n[" + getDate(m.timestamp) + "] " + prefix);
 
+		// Set colors and insert message
 		aset = sc.addAttribute(aset, StyleConstants.Foreground, Color.WHITE);
 		aset = sc.addAttribute(aset, StyleConstants.Bold, false);
 
@@ -138,21 +174,29 @@ public class ChatFrame extends JFrame {
 		chatPane.setCharacterAttributes(aset, false);
 		chatPane.replaceSelection("\n" + msg);
 
+		// Search for inserted emoji and replace it with its icon
 		EmojiChatManager.changed(chatPane);
 		chatPane.setEditable(false);
 
+		// unselect chat
 		chatPane.selectAll();
 		int x = chatPane.getSelectionEnd();
 		chatPane.select(x, x);
 	}
 
+	/**
+	 * update contactlist
+	 * 
+	 * @param chatData
+	 */
 	public void updateContacts(HashMap<Contact, List<Message>> chatData) {
 		contactWrapper.removeAll();
 		for (Contact c : chatData.keySet()) {
 
 			Message m = manager.getLatestMessageWith(c);
-			
-			if(m == null || m.sender == null) continue;
+
+			if (m == null || m.sender == null)
+				continue;
 			String name = (m.sender.name.equals(manager.user.name) ? "You: " : "");
 
 			contactWrapper.add(ComponentFactory.getContact(c.type.equals(ContactType.GROUP) ? c.shortName : c.name,
@@ -163,8 +207,14 @@ public class ChatFrame extends JFrame {
 		}
 	}
 
+	/**
+	 * open a chat
+	 * 
+	 * @param c Chat partner
+	 */
 	public void setChat(Contact c) {
 
+		// First time a chat has been opened, add buttons, inputs, and chatpane
 		if (this.currentContact == null) {
 			background.add(
 					ComponentFactory.getButton(new ImageIcon("./assets/addToGroup.png"), true, 555, 6, 25, 25, (e) -> {
@@ -188,6 +238,7 @@ public class ChatFrame extends JFrame {
 			background.updateUI();
 		}
 
+		// update chat partner and chat title
 		this.currentContact = c;
 		if (c.type.equals(ContactType.GROUP)) {
 			chatTitle.setText("Group: " + c.shortName);
@@ -197,6 +248,12 @@ public class ChatFrame extends JFrame {
 		this.removeAllMessages();
 	}
 
+	/**
+	 * Returns readable date
+	 * 
+	 * @param time timestamp
+	 * @return String
+	 */
 	public String getDate(long time) {
 		SimpleDateFormat format = new SimpleDateFormat("dd.MM.YY HH:mm");
 		return format.format(new Date(time));

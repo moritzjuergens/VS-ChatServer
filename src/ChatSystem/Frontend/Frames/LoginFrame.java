@@ -22,6 +22,11 @@ public class LoginFrame extends JFrame {
 	private Client client = null;
 	JLabel feedback = ComponentFactory.getLabel("", 0, 40, 400, 30);
 
+	/**
+	 * open a new loginframe
+	 * 
+	 * @param c Client parent
+	 */
 	@SuppressWarnings("deprecation")
 	public LoginFrame(Client c) {
 
@@ -71,12 +76,25 @@ public class LoginFrame extends JFrame {
 		setVisible(true);
 	}
 
+	/**
+	 * send server login/register request
+	 * 
+	 * @param name     username
+	 * @param password password
+	 * @param isLogin  boolean
+	 */
 	private void loginRegister(String name, String password, boolean isLogin) {
 		if (name.length() == 0 || password.length() == 0)
 			return;
-		client.sendMessage(new ServerMessage("sign" + (isLogin ? "in" : "up"), new SignInUpPacket(name, password, false, 0)));
+		client.sendMessage(
+				new ServerMessage("sign" + (isLogin ? "in" : "up"), new SignInUpPacket(name, password, false, 0)));
 	}
 
+	/**
+	 * Registration or Login hasn't been accepted
+	 * 
+	 * @param message Server response
+	 */
 	public void signResponseReceived(String message) {
 		feedback.setText(message);
 	}

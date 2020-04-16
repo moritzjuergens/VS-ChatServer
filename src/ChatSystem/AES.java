@@ -9,12 +9,21 @@ import java.util.Base64;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 
+/**
+ * 
+ * @author Lokesh Gupta
+ *         {@link https://howtodoinjava.com/security/java-aes-encryption-example/}
+ *
+ */
 public class AES {
 
 	private static final String secret = "Bill Clinton DidNothingWrong :) AndTHatsTRUE!!";
 	private static SecretKeySpec secretKey;
 	private static byte[] key;
-	
+
+	/**
+	 * init AES, create Key for de/encryption
+	 */
 	public static void init() {
 		MessageDigest sha = null;
 		try {
@@ -27,9 +36,15 @@ public class AES {
 			e.printStackTrace();
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
-		}		
+		}
 	}
 
+	/**
+	 * Encrypts a given String
+	 * 
+	 * @param strToEncrypt String to encrypt
+	 * @return encrypted String
+	 */
 	public static String encrypt(String strToEncrypt) {
 		try {
 			Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
@@ -41,6 +56,11 @@ public class AES {
 		return null;
 	}
 
+	/**
+	 * Decrypts a given String
+	 * @param strToDecrypt String to decrypt
+	 * @return decrypted String
+	 */
 	public static String decrypt(String strToDecrypt) {
 		try {
 			Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5PADDING");

@@ -6,6 +6,12 @@ import java.awt.event.WindowListener;
 import ChatSystem.Client.Client;
 import ChatSystem.Entities.ServerMessage;
 
+/**
+ * Used to handle closeevent of ChatFrame
+ * 
+ * @author timos
+ *
+ */
 public class ChatFrameListener implements WindowListener {
 
 	ChatManager manager = null;
@@ -14,32 +20,34 @@ public class ChatFrameListener implements WindowListener {
 	public ChatFrameListener(ChatManager manager) {
 		this.manager = manager;
 	}
-	
+
 	public ChatFrameListener(Client client) {
 		this.client = client;
 	}
 
+	/**
+	 * close all open connections, close windows, send logoff to server
+	 */
 	@Override
 	public void windowClosing(WindowEvent e) {
-		try {			
-			if(this.manager != null) {
+		try {
+			if (this.manager != null) {
 				this.manager.client.sendMessage(new ServerMessage("logoff", this.manager.user));
 				this.manager.contactPopUp.setVisible(false);
 				this.manager.emojiPopUp.setVisible(false);
 				this.manager.client.close();
 				Client.registeredClients.remove(this.manager.client);
-				this.manager.client.controllerUI.updateClients();;
+				this.manager.client.controllerUI.updateClients();
 				this.client = this.manager.client;
-				this.manager = null;				
+				this.manager = null;
 			}
-			if(this.client != null ) {
+			if (this.client != null) {
 				Client.registeredClients.remove(client);
 				client.controllerUI.updateClients();
 				client.close();
 				client = null;
 			}
-		}
-		catch(Exception ex) {
+		} catch (Exception ex) {
 			// Only called if window hasnt been initalized on slow mashines
 		}
 	}

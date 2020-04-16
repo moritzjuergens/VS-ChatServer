@@ -24,10 +24,15 @@ public class ContactPopUp extends JFrame {
 	private boolean addToGroup;
 	private ChatManager manager;
 
+	/**
+	 * creates a new contact popup
+	 * 
+	 * @param manager
+	 */
 	public ContactPopUp(ChatManager manager) {
-		
+
 		this.manager = manager;
-		
+
 		setSize(200, 300);
 		setResizable(false);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -48,6 +53,11 @@ public class ContactPopUp extends JFrame {
 		background.setLayout(null);
 	}
 
+	/**
+	 * opens popup, removes previousley fetched contacts, requests updated list
+	 * 
+	 * @param addToGroup
+	 */
 	public void open(boolean addToGroup) {
 		contactWrapper.removeAll();
 		contactWrapper.add(ComponentFactory.getLabel("Loading..."));
@@ -57,11 +67,21 @@ public class ContactPopUp extends JFrame {
 		manager.client.sendMessage(new ServerMessage("allcontacts", ""));
 	}
 
+	/**
+	 * adds a list of contacts to the popup
+	 * 
+	 * @param contacts List<Contact>
+	 */
 	public void addContacts(List<Contact> contacts) {
 		contactWrapper.removeAll();
 		contacts.forEach(this::addContact);
 	}
 
+	/**
+	 * Adds a specific contact to the popup
+	 * 
+	 * @param c Contact to be added
+	 */
 	private void addContact(Contact c) {
 		JButton button = ComponentFactory.getContact(" " + c.name, "", false, false, (e) -> {
 			manager.addContact(c, addToGroup);

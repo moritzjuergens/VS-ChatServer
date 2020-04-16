@@ -20,6 +20,10 @@ import ChatSystem.Frontend.Emoji.Emoji;
 @SuppressWarnings("serial")
 public class EmojiPopUp extends JFrame {
 
+	/**
+	 * creates a new emoji popup
+	 * @param manager parent
+	 */
 	public EmojiPopUp(ChatManager manager) {
 		setSize(220, 280);
 		setResizable(false);
@@ -31,6 +35,7 @@ public class EmojiPopUp extends JFrame {
 		add(background);
 		background.setLayout(new FlowLayout());
 
+		// Iterate through every emoji available and display it
 		Arrays.stream(Emoji.values()).forEach(emoji -> {
 			try {
 				Image image = ImageIO.read(new File("./emojis/" + emoji.name));
@@ -45,6 +50,10 @@ public class EmojiPopUp extends JFrame {
 		});
 	}
 
+	/**
+	 * open popup
+	 * @param comp Component the popup should be located at
+	 */
 	public void open(Component comp) {
 		setVisible(true);
 		setLocationRelativeTo(comp);

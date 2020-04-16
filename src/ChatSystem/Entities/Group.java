@@ -11,6 +11,11 @@ import ChatSystem.AES;
 import ChatSystem.RandomGroupNameGenerator;
 import ChatSystem.Entities.Contact.ContactType;
 
+/**
+ * 
+ * @author timos
+ *
+ */
 @SuppressWarnings("serial")
 public class Group implements Serializable {
 
@@ -19,6 +24,11 @@ public class Group implements Serializable {
 	public Contact creator;
 	public String name;
 
+	/**
+	 * Create a new group
+	 * 
+	 * @param member Members the group should automatically be filled with
+	 */
 	public Group(Contact... member) {
 		this.members = new ArrayList<Contact>();
 		this.creator = member[0];
@@ -32,7 +42,12 @@ public class Group implements Serializable {
 	public void setName(String name) {
 		this.name = name;
 	}
-	
+
+	/**
+	 * get contact of Group
+	 * 
+	 * @return Contact
+	 */
 	public Contact getContact() {
 		return new Contact(this.id + "", ContactType.GROUP, this.name);
 	}
@@ -41,6 +56,13 @@ public class Group implements Serializable {
 		return this.id == g.id;
 	}
 
+	/**
+	 * Encrypt members, creator and name. Members and creator will be encypted in
+	 * Entities.Contact.java
+	 * 
+	 * @param out
+	 * @throws IOException
+	 */
 	private void writeObject(ObjectOutputStream out) throws IOException {
 		out.writeLong(this.id);
 		out.writeObject(this.members);
@@ -48,6 +70,14 @@ public class Group implements Serializable {
 		out.writeObject(AES.encrypt(this.name));
 	}
 
+	/**
+	 * Decrypt memvers, creator and name. Members and creator will be decrypted in
+	 * Entities.Contact.Java
+	 * 
+	 * @param in
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
 	@SuppressWarnings("unchecked")
 	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 		this.id = in.readLong();

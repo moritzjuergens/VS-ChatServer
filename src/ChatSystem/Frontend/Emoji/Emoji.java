@@ -1,5 +1,10 @@
 package ChatSystem.Frontend.Emoji;
 
+/**
+ * Every Emoji available on VS ChatSystem
+ * @author timos
+ *
+ */
 public enum Emoji {
 
 	GRINNING_FACE("grinning-face.png", ":D"), BICEPS("Biceps.png", "biceps"), BROGLE("broccoli.png", "broccoli"),
@@ -20,6 +25,11 @@ public enum Emoji {
 		this.shortcut = shortcut;
 	}
 	
+	/**
+	 * Returns a Emoji by its name
+	 * @param name
+	 * @return Emoji
+	 */
 	public static Emoji forName(String name) {
 		for(Emoji e : Emoji.values()) {
 			if(e.toString().equals(name)) {

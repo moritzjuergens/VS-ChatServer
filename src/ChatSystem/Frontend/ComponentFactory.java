@@ -17,14 +17,37 @@ import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.SwingConstants;
 
+/**
+ * ComponentFactory used to build the Userinterfaces
+ * 
+ * @author timos
+ *
+ */
 public class ComponentFactory {
 
 	public static Color blue = new Color(0, 136, 255);
 
+	/**
+	 * Returns a uniform Font
+	 * 
+	 * @param size    Fontsize
+	 * @param variant Fontvariant
+	 * @return Font
+	 */
 	public static Font getFont(int size, int variant) {
 		return new Font("Arial", variant, size);
 	}
 
+	/**
+	 * Returns a prestyled JScrollPane
+	 * 
+	 * @param view   View to be scrollable
+	 * @param x      Position
+	 * @param y      Position
+	 * @param width
+	 * @param height
+	 * @return JScrollPane
+	 */
 	public static JScrollPane getScrollPane(Component view, int x, int y, int width, int height) {
 		JScrollPane pane = new JScrollPane(view);
 		pane.setBounds(x, y, width, height);
@@ -35,6 +58,16 @@ public class ComponentFactory {
 		return pane;
 	}
 
+	/**
+	 * Returns a prestyled Contact Button, Displayed in contact list
+	 * 
+	 * @param name          Contact's name
+	 * @param latestMessage last message received/sent
+	 * @param unread        boolean
+	 * @param open          is the chat currently opened
+	 * @param l             action to be performed on click
+	 * @return JButton
+	 */
 	public static JButton getContact(String name, String latestMessage, boolean unread, boolean open,
 			ActionListener l) {
 		JButton button = getButton(
@@ -49,10 +82,20 @@ public class ComponentFactory {
 		return button;
 	}
 
+	/**
+	 * Spacer between Contacts in contact list
+	 * 
+	 * @return JLabel
+	 */
 	public static JLabel getContactSpacer() {
 		return getLabel(" ");
 	}
 
+	/**
+	 * Returns a prestyled TextPane
+	 * 
+	 * @return JTextPane
+	 */
 	public static JTextPane getTextPane() {
 		JTextPane pane = new JTextPane();
 		pane.setFont(getFont(14, Font.PLAIN));
@@ -61,6 +104,18 @@ public class ComponentFactory {
 		return pane;
 	}
 
+	/**
+	 * Returns a prestyled Button
+	 * 
+	 * @param icon    Icon to be displayed
+	 * @param primary boolean (button variant)
+	 * @param x       Position
+	 * @param y       Position
+	 * @param width
+	 * @param height
+	 * @param l       Action to be performed on click
+	 * @return JButton
+	 */
 	public static JButton getButton(ImageIcon icon, boolean primary, int x, int y, int width, int height,
 			ActionListener l) {
 		JButton button = getButton("", primary, x, y, width, height, l);
@@ -68,6 +123,18 @@ public class ComponentFactory {
 		return button;
 	}
 
+	/**
+	 * Returns a prestyled Button
+	 * 
+	 * @param title   Button's title
+	 * @param primary boolean (button variant)
+	 * @param x       Position
+	 * @param y       Position
+	 * @param width
+	 * @param height
+	 * @param l       Action to be performed on click
+	 * @return JButton
+	 */
 	public static JButton getButton(String title, boolean primary, int x, int y, int width, int height,
 			ActionListener l) {
 		JButton button = getButton(title, primary);
@@ -76,6 +143,13 @@ public class ComponentFactory {
 		return button;
 	}
 
+	/**
+	 * Returns a prestyled Button
+	 * 
+	 * @param title   Button's title
+	 * @param primary boolean (button variant)
+	 * @return JButton
+	 */
 	public static JButton getButton(String title, boolean primary) {
 		JButton button = new JButton(title);
 		button.setBackground(primary ? blue : Color.DARK_GRAY);
@@ -89,12 +163,28 @@ public class ComponentFactory {
 		return button;
 	}
 
+	/**
+	 * Returns a prestyled Label
+	 * 
+	 * @param title  Text to be displayed
+	 * @param x      Position
+	 * @param y      Position
+	 * @param width
+	 * @param height
+	 * @return JLabel
+	 */
 	public static JLabel getLabel(String title, int x, int y, int width, int height) {
 		JLabel label = getLabel(title);
 		label.setBounds(x, y, width, height);
 		return label;
 	}
 
+	/**
+	 * Returns a prestyled JLabel
+	 * 
+	 * @param title Text to be displayed
+	 * @return JLabel
+	 */
 	public static JLabel getLabel(String title) {
 		JLabel label = new JLabel(title);
 		label.setOpaque(false);
@@ -103,24 +193,52 @@ public class ComponentFactory {
 		return label;
 	}
 
+	/**
+	 * Returns a prestyled TextField
+	 * 
+	 * @param x      Position
+	 * @param y      Position
+	 * @param width
+	 * @param height
+	 * @return JTextField
+	 */
 	public static JTextField getTextField(int x, int y, int width, int height) {
 		JTextField field = getTextField();
 		field.setBounds(x, y, width, height);
 		return field;
 	}
 
+	/**
+	 * Returns a prestyled JTextField
+	 * 
+	 * @return JTextField
+	 */
 	public static JTextField getTextField() {
 		JPasswordField field = getPasswordField();
 		field.setEchoChar((char) 0);
 		return (JTextField) field;
 	}
 
+	/**
+	 * Returns a prestyled PasswordField
+	 * 
+	 * @param x      Position
+	 * @param y      Position
+	 * @param width
+	 * @param height
+	 * @return JPasswordField
+	 */
 	public static JPasswordField getPasswordField(int x, int y, int width, int height) {
 		JPasswordField field = getPasswordField();
 		field.setBounds(x, y, width, height);
 		return field;
 	}
 
+	/**
+	 * Returns a prestyled PasswordField
+	 * 
+	 * @return JPasswordField
+	 */
 	public static JPasswordField getPasswordField() {
 		JPasswordField field = new JPasswordField();
 		field.setBackground(null);
@@ -134,6 +252,12 @@ public class ComponentFactory {
 		return field;
 	}
 
+	/**
+	 * Returns a prestyled JPanel
+	 * 
+	 * @param layout Layoutmanager to be used in Panel
+	 * @return JPanel
+	 */
 	public static JPanel getPanel(LayoutManager layout) {
 		JPanel panel = new JPanel(layout);
 		panel.setOpaque(false);
