@@ -50,11 +50,11 @@ public class Warehouse {
 	 * @param fileName File to be saved
 	 */
 	public void saveFile(String fileName) {
-		String name = "./" + fileName + "_" + server.port + ".dat";
+		String name = "./" + fileName + "_" + server.getPort() + ".dat";
 
 		try {
 			ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(name));
-			CSLogger.log(Warehouse.class, "Saving %s in %s", fileName, name);
+			CSLogger.log(Warehouse.class, "[%s\t] Saving %s in %s", server.getPort(), fileName, name);
 
 			if (fileName.equals("messages")) {
 				out.writeObject(getMessages());
@@ -85,7 +85,7 @@ public class Warehouse {
 				synchronized (users) {
 					for (String fileName : files) {
 
-						String name = "./" + fileName + "_" + server.port + ".dat";
+						String name = "./" + fileName + "_" + server.getPort() + ".dat";
 
 						File f = new File(name);
 
@@ -93,7 +93,7 @@ public class Warehouse {
 						if (!f.exists())
 							continue;
 
-						CSLogger.log(Warehouse.class, "Loading file: %s", f.getAbsolutePath());
+						CSLogger.log(Warehouse.class, "[%s\t] Loading file: %s", server.getPort(), f.getAbsolutePath());
 
 						try {
 							ObjectInputStream in = new ObjectInputStream(new FileInputStream(name));
@@ -137,7 +137,7 @@ public class Warehouse {
 	 */
 	public void addMessage(Message m) {
 		if (!doesMessageExist(m)) {
-			CSLogger.log(Warehouse.class, "Adding Message to Warehouse %s", m);
+			CSLogger.log(Warehouse.class, "[%s\t] Adding Message to Warehouse %s", server.getPort(), m);
 			synchronized (messages) {
 				messages.add(m);
 				saveFile("messages");
@@ -151,12 +151,12 @@ public class Warehouse {
 	 * @param u User to be stored
 	 */
 	public void addUser(User u) {
-		CSLogger.log(Warehouse.class, "Trying to create User %s", u);
+		CSLogger.log(Warehouse.class, "[%s\t] Trying to create User %s", server.getPort(), u);
 		if (doesUserExist(u.name)) {
-			CSLogger.log(Warehouse.class, "User already exists", "");
+			CSLogger.log(Warehouse.class, "[%s\t] User already exists", server.getPort());
 			return;
 		}
-		CSLogger.log(Warehouse.class, "User created and stored in DB", "");
+		CSLogger.log(Warehouse.class, "[%s\t] User created and stored in DB", server.getPort());
 		synchronized (users) {
 			users.add(u);
 			saveFile("users");
@@ -175,7 +175,7 @@ public class Warehouse {
 			// If the group already exists, check if their had been changes to its member
 			// list
 			if (doesGroupExsits(g)) {
-				CSLogger.log(Warehouse.class, "Updating members of in group %s", g);
+				CSLogger.log(Warehouse.class, "[%s\t] Updating members of in group %s", server.getPort(), g);
 				Group local = getGroupById("" + g.id);
 				for (Contact member : g.members) {
 					if (!local.members.contains(member)) {
@@ -184,7 +184,7 @@ public class Warehouse {
 					saveFile("groups");
 				}
 			} else {
-				CSLogger.log(Warehouse.class, "Adding Group to Warehouse %s", g);
+				CSLogger.log(Warehouse.class, "[%s\t] Adding Group to Warehouse %s", server.getPort(), g);
 				groups.add(g);
 				saveFile("groups");
 			}
@@ -197,7 +197,7 @@ public class Warehouse {
 	 * @return List of Messages
 	 */
 	public List<Message> getMessages() {
-		return messages;
+		return messages.stream().sorted((m1, m2) -> m1.timestamp > m2.timestamp ? 1 : -1).collect(Collectors.toList());
 	}
 
 	/**

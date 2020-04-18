@@ -8,7 +8,7 @@ import java.io.Serializable;
 import ChatSystem.AES;
 
 @SuppressWarnings("serial")
-public class Message implements Comparable<Message>, Serializable {
+public class Message implements Serializable {
 
 	public long timestamp;
 	public Contact sender;
@@ -68,10 +68,4 @@ public class Message implements Comparable<Message>, Serializable {
 	public String toString() {
 		return this.timestamp + "\t" + this.sender + "\t" + this.receiver + "\t" + this.message;
 	}
-
-	@Override
-	public int compareTo(Message m) {
-		return this.timestamp < m.timestamp ? -1 : 1;
-	}
-
 }

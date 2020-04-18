@@ -77,6 +77,11 @@ public class Server {
 							break;
 						}
 					}
+					
+					// Inform clients about shutdown, if possible
+					for(User u : users) {
+						sendMessage(u.out, new ServerMessage("reconnect", ""));
+					}
 				}).start();
 
 				// Fetch missed messages
@@ -84,7 +89,7 @@ public class Server {
 
 			} catch (IOException e) {
 			} finally {
-				CSLogger.log(Server.class, "Server listening on port %s", port);
+				CSLogger.log(Server.class, "[%s\t] Listening on port %s", getPort(), port);
 			}
 		}).start();
 	}
@@ -94,7 +99,7 @@ public class Server {
 	 * 
 	 * @return port
 	 */
-	protected int getPort() {
+	public int getPort() {
 		return port;
 	}
 
@@ -113,7 +118,7 @@ public class Server {
 	 */
 	private void close() {
 		try {
-			CSLogger.log(Server.class, "Shutting down Server %s", ss.getLocalPort());
+			CSLogger.log(Server.class, "[%s\t] Shutting down", getPort());
 			ss.close();
 			ss = null;
 		} catch (IOException | NullPointerException e) {
@@ -139,10 +144,10 @@ public class Server {
 		u.out = out;
 		users.add(u);
 		this.controllerUI.updateServer();
-
+		
 		// check if user had already been signed in on a different server
 		if (!data.alreadySignedIn) {
-
+			
 			// user hasnt been signed in, send welcome packet (all chats and contacts)
 			this.sendMessage(out, new ServerMessage("welcome", new WelcomePacket(u, warehouse.getUserData(u))));
 		} else {

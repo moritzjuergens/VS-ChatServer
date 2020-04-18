@@ -29,6 +29,7 @@ public class Controller extends JFrame {
 	public JPanel clientContainer = new JPanel(new GridLayout(0, 3, 10, 10));
 	public JPanel serverContainer = new JPanel(new GridLayout(0, 4, 10, 10));
 	public JTextField portField = new JTextField("7777", 6);
+	public JTextField clientField = new JTextField(6);
 	public JLabel infoLabel = new JLabel("", SwingConstants.CENTER);
 
 	/**
@@ -49,11 +50,15 @@ public class Controller extends JFrame {
 
 		JPanel clientPanel = new JPanel(new BorderLayout());
 		JPanel clientHeader = new JPanel(new BorderLayout());
-		clientHeader.add(new JLabel("Active Clients", SwingConstants.CENTER), BorderLayout.CENTER);
+		clientHeader.add(new JLabel("Active Clients", SwingConstants.CENTER), BorderLayout.LINE_START);
+		JPanel clientPortPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+		clientPortPanel.add(new JLabel("Connect to: "));
+		clientPortPanel.add(clientField);
+		clientHeader.add(clientPortPanel, BorderLayout.CENTER);
+		
 		JButton newClient = new JButton("Start Client");
 		newClient.addActionListener((l) -> {
-			infoLabel.setText("Client started!");
-			new Client(this);
+			createClient();
 			updateClients();
 		});
 		clientHeader.add(newClient, BorderLayout.LINE_END);
@@ -85,7 +90,7 @@ public class Controller extends JFrame {
 	}
 
 	/**
-	 * Create a new Server, with given port Validation included
+	 * Create a new Server, with given port, validation included
 	 */
 	public void createServer() {
 		int port;
@@ -111,6 +116,26 @@ public class Controller extends JFrame {
 		}
 		new Server(this, port);
 		infoLabel.setText("Server started!");
+	}
+
+	/**
+	 * Create a new Client, with/-out given port, validation included
+	 */
+	public void createClient() {
+		
+		int port;
+
+		// is port a number
+		try {
+			port = Integer.parseInt(clientField.getText());
+		} catch (Exception e) {
+			new Client(this);
+			infoLabel.setText("Client started!");
+			return;
+		}
+		
+		new Client(this, port);	
+		infoLabel.setText("Client started!");
 	}
 
 	/**

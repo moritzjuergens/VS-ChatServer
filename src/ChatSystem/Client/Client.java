@@ -44,11 +44,20 @@ public class Client extends Thread {
 	 * @param controllerUI controllerUI to update on changes
 	 */
 	public Client(Controller controllerUI) {
+		this(controllerUI, -1);
+	}
+
+	/**
+	 * Creates a new client and connects him to a given server
+	 * 
+	 * @param controllerUI controllerUI to update on changes
+	 */
+	public Client(Controller controllerUI, int port) {
 		this.controllerUI = controllerUI;
 
 		// add all available ports to try
 		portsToTrie = Arrays.stream(Server.portRange).map(x -> "" + x).collect(Collectors.toList());
-		this.port = getUntriedPort();
+		this.port = port == -1 ? getUntriedPort() : port;
 
 		Client.registeredClients.add(this);
 
@@ -70,10 +79,11 @@ public class Client extends Thread {
 				out = new ObjectOutputStream(s.getOutputStream());
 				in = new ObjectInputStream(s.getInputStream());
 				CSLogger.log(Client.class, "Client using server %s", port);
+				reconnecting = false;
 
 				// New Thread for incoming messages
 				new Thread(() -> {
-					while (true) {
+					while (!reconnecting) {
 						try {
 							// Message received and forwarded for further actions
 							ServerMessage m = (ServerMessage) in.readObject();
@@ -85,9 +95,8 @@ public class Client extends Thread {
 
 				// Refill portlist for later uses
 				portsToTrie = Arrays.stream(Server.portRange).map(x -> "" + x).collect(Collectors.toList());
-				reconnecting = false;
 
-				// Resend all messages, waiting to be send while connection hadnt been
+				// Resend all messages, waiting to be send while connection hadn't been
 				// established
 				messageQueue.stream().forEach(this::sendMessage);
 				messageQueue.clear();
@@ -113,6 +122,21 @@ public class Client extends Thread {
 			}
 		}).start();
 
+	}
+
+	/**
+	 * reconnect to an other server
+	 */
+	public void reconnect() {
+		if(reconnecting) return;
+		this.reconnecting = true;
+		close();
+
+		// Server is no longer available, remove current port and retry with a different
+		// port
+		this.lastTimeStamp = System.currentTimeMillis();
+		portsToTrie.remove("" + port);
+		connect();
 	}
 
 	/**
@@ -164,20 +188,14 @@ public class Client extends Thread {
 
 		try {
 			CSLogger.log(Client.class, "Sending %s", message);
-			out.writeObject(new ServerMessage("ping", "pong"));
-			out.writeObject(new ServerMessage("clinton", "pong"));
+			out.writeObject(new ServerMessage("", ""));
+			out.writeObject(new ServerMessage("", ""));
 			out.writeObject(message);
 		} catch (IOException e) {
-			close();
-			CSLogger.log(Client.class, "Der Server ist nicht erreichbar");
+			CSLogger.log(Client.class, "Der Server ist nicht mehr erreichbar");
 
-			// Server is no longer available, remove current port and retry with a different
-			// port
-			this.reconnecting = true;
-			this.lastTimeStamp = System.currentTimeMillis();
-			portsToTrie.remove("" + port);
 			messageQueue.add(message);
-			connect();
+			reconnect();
 		}
 	}
 
@@ -222,6 +240,12 @@ public class Client extends Thread {
 		case "openchat":
 			chat.openChatWith((Contact) message.object);
 			break;
+
+		// If server was able to send shutdown message to client
+		case "reconnect":
+			reconnect();
+			break;
+
 		}
 	}
 }
