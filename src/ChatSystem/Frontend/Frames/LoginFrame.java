@@ -73,6 +73,7 @@ public class LoginFrame extends JFrame {
 		background.add(title);
 		background.add(pw);
 		background.add(un);
+
 		setVisible(true);
 	}
 

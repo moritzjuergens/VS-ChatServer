@@ -1,6 +1,7 @@
 package ChatSystem;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.util.Arrays;
@@ -146,11 +147,21 @@ public class Controller extends JFrame {
 		int clientCount = 0;
 		for (Client c : Client.registeredClients) {
 			clientContainer.add(new JLabel("    Client #" + ++clientCount));
+			
+			JLabel label;
 			if (c.chat == null || c.chat.user == null) {
-				clientContainer.add(new JLabel("not signed in"));
+				label = new JLabel("not signed in");
 			} else {
-				clientContainer.add(new JLabel("User: " + c.chat.user.name));
+				label = new JLabel("User: " + c.chat.user.name);
 			}
+			label.setForeground(Color.RED);
+			if(c.connected) {
+				label.setForeground(Color.GREEN);
+			}
+			if(c.reconnecting) {
+				label.setForeground(Color.ORANGE);
+			}
+			clientContainer.add(label);
 			clientContainer.add(new JLabel("Connected to S:" + c.port + "    "));
 		}
 		clientContainer.repaint();

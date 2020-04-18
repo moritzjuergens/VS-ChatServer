@@ -31,7 +31,8 @@ public class Client extends Thread {
 	public Controller controllerUI;
 	public long lastTimeStamp = 0;
 	private List<ServerMessage> messageQueue = new ArrayList<>();
-	private boolean reconnecting = false;
+	public boolean connected = false;
+	public boolean reconnecting = false;
 
 	Socket s;
 	ObjectInputStream in;
@@ -70,6 +71,8 @@ public class Client extends Thread {
 	 * connect Client to a random Server
 	 */
 	public void connect() {
+		if (chat != null)
+			chat.updateSpinner(true);
 		this.controllerUI.updateClients();
 		new Thread(() -> {
 			try {
@@ -80,6 +83,11 @@ public class Client extends Thread {
 				in = new ObjectInputStream(s.getInputStream());
 				CSLogger.log(Client.class, "Client using server %s", port);
 				reconnecting = false;
+				connected = true;
+				controllerUI.updateClients();
+
+				if (chat != null)
+					chat.updateSpinner(false);
 
 				// New Thread for incoming messages
 				new Thread(() -> {
@@ -118,6 +126,7 @@ public class Client extends Thread {
 					connect();
 				} else {
 					CSLogger.log(Client.class, "Client cant use any Server. All offline!");
+					connected = false;
 				}
 			}
 		}).start();
@@ -128,8 +137,10 @@ public class Client extends Thread {
 	 * reconnect to an other server
 	 */
 	public void reconnect() {
-		if(reconnecting) return;
+		if (reconnecting)
+			return;
 		this.reconnecting = true;
+		controllerUI.updateClients();
 		close();
 
 		// Server is no longer available, remove current port and retry with a different

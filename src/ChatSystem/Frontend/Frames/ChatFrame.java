@@ -41,6 +41,8 @@ public class ChatFrame extends JFrame {
 	private JTextField textField = ComponentFactory.getTextField(278, 334, 211, 25);
 	private ChatManager manager;
 	private JLabel background = new JLabel(new ImageIcon("./assets/chat.png"));
+	private JLabel spinner = ComponentFactory.getLabel("", 275, 175, 50, 50);
+	private JLabel spinner_info = ComponentFactory.getLabel("Reconnecting...", 200, 225, 200, 50);
 
 	/**
 	 * Opens a new chat frame when client has received login confirmation
@@ -76,6 +78,12 @@ public class ChatFrame extends JFrame {
 		this.contactWrapper.setLayout(new BoxLayout(this.contactWrapper, BoxLayout.Y_AXIS));
 		background.add(ComponentFactory.getScrollPane(this.contactWrapper, 0, 35, 192, 327));
 
+		spinner.setIcon(new ImageIcon("./assets/loading.gif"));
+		spinner_info.setHorizontalAlignment(SwingConstants.CENTER);
+		background.add(spinner);
+		background.add(spinner_info);
+
+		updateSpinner(false);
 		setVisible(true);
 
 		addWindowListener(new ChatFrameListener(manager));
@@ -257,6 +265,17 @@ public class ChatFrame extends JFrame {
 	public String getDate(long time) {
 		SimpleDateFormat format = new SimpleDateFormat("dd.MM.YY HH:mm");
 		return format.format(new Date(time));
+	}
+
+	/**
+	 * Display spinner gif or not, disable input as needed
+	 * 
+	 * @param state visible
+	 */
+	public void updateSpinner(boolean state) {
+		textField.setEditable(!state);
+		spinner.setVisible(state);
+		spinner_info.setVisible(state);
 	}
 
 }

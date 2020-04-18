@@ -227,6 +227,15 @@ public class ChatManager {
 	public void emojiPicked(Emoji emoji) {
 		chatFrame.insertEmoji(emoji);
 	}
+	
+	/**
+	 * hide or show spinner
+	 * @param state boolean
+	 */
+	public void updateSpinner(boolean state) {
+		if(chatFrame == null) return;
+		chatFrame.updateSpinner(state);
+	}
 
 	/**
 	 * Send system notification if chatFrame isn't focused
