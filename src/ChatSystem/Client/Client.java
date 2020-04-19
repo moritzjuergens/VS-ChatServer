@@ -127,6 +127,8 @@ public class Client extends Thread {
 				} else {
 					CSLogger.log(Client.class, "Client cant use any Server. All offline!");
 					connected = false;
+					reconnecting = false;
+					if (chat != null) chat.updateSpinner(false);
 					controllerUI.updateClients();
 				}
 			}

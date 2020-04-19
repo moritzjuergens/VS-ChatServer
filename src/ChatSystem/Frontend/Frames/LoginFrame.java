@@ -60,9 +60,6 @@ public class LoginFrame extends JFrame {
 		JTextField un = ComponentFactory.getTextField(20, 100, 160, 25);
 		JPasswordField pw = ComponentFactory.getPasswordField(210, 100, 160, 25);
 
-		un.setText("Timo");
-		pw.setText("Pass");
-
 		background.add(ComponentFactory.getButton("Login", true, 20, 150, 160, 30, (e) -> {
 			this.loginRegister(un.getText(), pw.getText(), true);
 		}));
@@ -85,8 +82,14 @@ public class LoginFrame extends JFrame {
 	 * @param isLogin  boolean
 	 */
 	private void loginRegister(String name, String password, boolean isLogin) {
-		if (name.length() == 0 || password.length() == 0)
+		if (name.length() == 0 || password.length() == 0) {
+			if (name.length() == 0) {
+				signResponseReceived("Please enter a name");
+			} else {
+				signResponseReceived("Please enter a password");
+			}
 			return;
+		}
 		client.sendMessage(
 				new ServerMessage("sign" + (isLogin ? "in" : "up"), new SignInUpPacket(name, password, false, 0)));
 	}

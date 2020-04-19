@@ -12,7 +12,7 @@ import java.util.Random;
 public class RandomGroupNameGenerator {
 
 	private static String[] suff = new String[] { "Kickers", "Falcons", "Waterballs", "Cyborgs", "Commando Squad",
-			"Geckos", "Busters", "Soldiers", "Clintons", "Racers", "Predators", "Fighter", "Monsters" };
+			"Geckos", "Busters", "Soldiers", "Racers", "Predators", "Fighter", "Monsters" };
 	private static String[] pre = new String[] { "Red", "New York", "Awesome", "Incredible", "Marvelous", "Quicksilver",
 			"Thunder", "Night", "Xtreme" };
 

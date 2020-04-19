@@ -50,7 +50,7 @@ public class ComponentFactory {
 	 */
 	public static JScrollPane getScrollPane(Component view, int x, int y, int width, int height) {
 		JScrollPane pane = new JScrollPane(view);
-		pane.setBounds(x, y, width, height);
+		pane.setBounds(x + 5, y, width, height);
 		pane.setOpaque(false);
 		pane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		pane.getViewport().setOpaque(false);
@@ -138,7 +138,7 @@ public class ComponentFactory {
 	public static JButton getButton(String title, boolean primary, int x, int y, int width, int height,
 			ActionListener l) {
 		JButton button = getButton(title, primary);
-		button.setBounds(x, y, width, height);
+		button.setBounds(x + 5, y, width, height);
 		button.addActionListener(l);
 		return button;
 	}
@@ -175,7 +175,7 @@ public class ComponentFactory {
 	 */
 	public static JLabel getLabel(String title, int x, int y, int width, int height) {
 		JLabel label = getLabel(title);
-		label.setBounds(x, y, width, height);
+		label.setBounds(x + 5, y, width, height);
 		return label;
 	}
 
@@ -204,7 +204,7 @@ public class ComponentFactory {
 	 */
 	public static JTextField getTextField(int x, int y, int width, int height) {
 		JTextField field = getTextField();
-		field.setBounds(x, y, width, height);
+		field.setBounds(x + 5, y, width, height);
 		return field;
 	}
 
@@ -230,7 +230,7 @@ public class ComponentFactory {
 	 */
 	public static JPasswordField getPasswordField(int x, int y, int width, int height) {
 		JPasswordField field = getPasswordField();
-		field.setBounds(x, y, width, height);
+		field.setBounds(x + 5, y, width, height);
 		return field;
 	}
 

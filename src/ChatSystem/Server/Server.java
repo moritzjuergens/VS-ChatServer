@@ -276,11 +276,15 @@ public class Server {
 	 * @param out     Outputstream for anwsers
 	 */
 	public void messageReceived(ServerMessage message, ObjectOutputStream out) {
-		CSLogger.log(Server.class, "[%s\t] Message received: %s", getPort(), message);
+
+		if (message.prefix.length() < 0)
+			return;
 
 		// check if message exists and handle prefix.
 		if (message.equals(null))
 			return;
+
+		CSLogger.log(Server.class, "[%s\t] Message received: %s", getPort(), message);
 
 		switch (message.prefix.toLowerCase()) {
 
